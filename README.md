@@ -13,6 +13,7 @@ field-journal narrative.
 - **Motion detection** — frame-diff trigger clips pre-buffered RTSP footage the moment anything stirs in the box
 - **Gemini vision analysis** — every snapshot and clip is classified with an `event_type` (e.g. `incubating`, `eggs_visible`, `adult_arrives`) and a one-sentence narrative
 - **Daily journal** — Gemini writes a warm, factual journal entry from each day's events, updated every 3 hours; each entry includes a biological context paragraph explaining the science behind what was observed
+- **Attenborough narration** — each entry can be played aloud in a David Attenborough-style voice, generated locally on a GPU box via XTTS-v2 (see [`narrator/README.md`](narrator/README.md))
 - **Daily & cumulative timelapses** — per-day ~30 s H.264 MP4s built at midnight, embedded in the journal; a season-wide cumulative film updated nightly
 - **Species reference page** — comprehensive biological profile of the Common Redstart with CC-licensed photography
 - **Health monitoring** — checks RTSP stream, disk space, and DB activity every 2 min; pushes alerts via [ntfy](https://ntfy.sh)

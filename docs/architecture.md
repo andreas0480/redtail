@@ -68,7 +68,7 @@ is being written to. Fires a push notification via [ntfy](https://ntfy.sh) on an
 snapshots       (id, captured_at, path, analyzed)
 clips           (id, started_at, duration_seconds, path, trigger, analyzed, keep, label, thumbnail_path)
 events          (id, occurred_at, source, source_id, event_type, confidence, narrative, raw_json)
-daily_summaries (day PK, summary, events_count, timelapse_path, featured_image_path, bio_context, created_at)
+daily_summaries (day PK, summary, events_count, timelapse_path, featured_image_path, bio_context, narration_path, created_at)
 alerts          (id, fired_at, check_name, severity, message)
 ```
 
@@ -76,6 +76,11 @@ alerts          (id, fired_at, check_name, severity, message)
 relevant to that day's observed events (e.g. incubation physiology on a day of long sitting
 bouts; egg-laying interval on a day a new egg appeared). Added via live migration if the
 column is absent on startup.
+
+`narration_path` is the in-container path to an Attenborough-voiced MP3 of the day's summary,
+generated separately by [`narrator/`](../narrator/README.md) on a GPU machine and pushed to
+`/data/narrations/<day>.mp3` over SSH. The journal page shows an `<audio>` player for any
+entry where this is set.
 
 ## AI event types
 

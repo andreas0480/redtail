@@ -269,6 +269,14 @@ async def journal_page(request: Request):
         tl_path = cfg.timelapses_dir / "daily" / f"{row['day']}.mp4"
         tl_url = f"/media/timelapses/daily/{row['day']}.mp4" if tl_path.exists() else None
 
+        narration_url = None
+        if row["narration_path"]:
+            try:
+                np = Path(row["narration_path"])
+                narration_url = f"/media/narrations/{np.name}"
+            except Exception:
+                pass
+
         summaries.append({
             "day": row["day"],
             "summary": row["summary"],
@@ -276,6 +284,7 @@ async def journal_page(request: Request):
             "featured_image_url": img_url,
             "timelapse_url": tl_url,
             "bio_context": row["bio_context"],
+            "narration_url": narration_url,
         })
 
     return templates.TemplateResponse(
@@ -354,6 +363,11 @@ async def media_timelapse(path: str):
 @app.get("/media/thumbnails/{path:path}")
 async def media_thumbnail(path: str):
     return FileResponse(_safe_media(cfg.thumbnails_dir, path))
+
+
+@app.get("/media/narrations/{path:path}")
+async def media_narration(path: str):
+    return FileResponse(_safe_media(cfg.data_dir / "narrations", path))
 
 
 @app.get("/health/quick")

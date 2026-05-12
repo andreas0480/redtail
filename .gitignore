@@ -23,6 +23,13 @@ backfill/clip_frames/
 *.db-wal
 *.db-shm
 
+# Narrator (XTTS model files are huge; output MP3s live in container)
+narrator/.venv/
+narrator/model/
+narrator/output/
+narrator/refs/
+narrator/cron.log
+
 # Build / IDE
 .DS_Store
 *.swp

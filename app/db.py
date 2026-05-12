@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS daily_summaries (
     timelapse_path TEXT,
     featured_image_path TEXT,
     bio_context TEXT,
+    narration_path TEXT,
     created_at TEXT NOT NULL
 );
 
@@ -72,6 +73,8 @@ class Database:
             cols = {row[1] for row in c.execute("PRAGMA table_info(daily_summaries)")}
             if "bio_context" not in cols:
                 c.execute("ALTER TABLE daily_summaries ADD COLUMN bio_context TEXT")
+            if "narration_path" not in cols:
+                c.execute("ALTER TABLE daily_summaries ADD COLUMN narration_path TEXT")
             c.commit()
 
     def _connect(self) -> sqlite3.Connection:

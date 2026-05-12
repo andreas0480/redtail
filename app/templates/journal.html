@@ -14,6 +14,12 @@
         <h3 class="journal-head">{{ s.day }} <small>· {{ s.events_count }} events observed</small></h3>
         <div class="journal-content">
           <p>{{ s.summary }}</p>
+          {% if s.narration_url %}
+          <div class="journal-audio">
+            <span class="journal-audio-label">Read aloud</span>
+            <audio controls preload="none" src="{{ s.narration_url }}"></audio>
+          </div>
+          {% endif %}
           {% if s.bio_context %}
           <p class="bio-context">{{ s.bio_context }}</p>
           {% endif %}

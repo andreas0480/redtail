@@ -37,6 +37,12 @@
 
 * { box-sizing: border-box; }
 
+/* Prevent any element from causing horizontal page scroll */
+html, body { overflow-x: hidden; max-width: 100%; }
+
+/* Images and videos never escape their container */
+img, video { max-width: 100%; height: auto; }
+
 html { background: var(--paper-warm); }
 
 body {
@@ -528,7 +534,7 @@ main {
 
 .journal-content {
   flex: 1;
-  min-width: 300px;
+  min-width: min(300px, 100%);
 }
 
 .journal-image,
@@ -778,16 +784,16 @@ footer code {
 .species-eggs-row,
 .species-chicks-row {
   display: flex;
+  flex-wrap: wrap;   /* both rows wrap naturally before breakpoints fire */
   gap: 24px;
   align-items: flex-start;
   margin-top: 12px;
 }
 
-.species-chicks-row { flex-wrap: wrap; }
-.species-chicks-row > figure { flex: 0 0 180px; }
-.species-chicks-row > div { flex: 1; min-width: 220px; }
-.species-eggs-row > figure { flex: 0 0 200px; }
-.species-eggs-row > div { flex: 1; }
+.species-chicks-row > figure { flex: 0 0 min(180px, 100%); }
+.species-chicks-row > div { flex: 1; min-width: min(220px, 100%); }
+.species-eggs-row > figure { flex: 0 0 min(200px, 100%); }
+.species-eggs-row > div { flex: 1; min-width: 0; }
 
 .card h3 {
   font-family: var(--serif);
@@ -811,6 +817,10 @@ footer code {
   border-collapse: collapse;
   font-size: 13px;
   white-space: nowrap;
+  display: block;      /* lets it scroll inside conservation-grid */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 
 .species-table th,
@@ -915,7 +925,6 @@ footer code {
   .species-quick-facts { grid-template-columns: 1fr; }
   .fact-label { min-width: 90px; }
   .species-table { font-size: 12px; }
-  .species-table th, .species-table td { white-space: normal; word-break: break-word; }
   .card h3 { font-size: 15px; }
 
   /* stat strip: always 2 columns */

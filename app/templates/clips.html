@@ -5,27 +5,40 @@
 
 <section class="card">
   <h2 class="card-title">Motion clips</h2>
-  <p class="card-subtitle">Recorded automatically when something stirs in the box. Each action is labeled and narrated by Gemini.</p>
-  
+  <p class="card-subtitle">Recorded automatically when something stirs in the box. Grouped by day and 6-hour period — click a period to expand.</p>
+
   {% if sorted_days %}
     {% for day in sorted_days %}
-      <div class="day-group">
-        <h3 class="day-title">{{ day }}</h3>
-        <ul class="clip-list">
-          {% for c in grouped_clips[day] %}
-          <li class="clip-item">
-            <div class="clip-media">
-              <video controls preload="metadata" poster="{{ c.thumbnail_url or '' }}" src="{{ c.url }}"></video>
-            </div>
-            <div class="clip-info">
-              <p class="title">{{ c.label }}</p>
-              <p class="narrative">{{ c.narrative }}</p>
-              <p class="meta">{{ c.local_date }} · {{ c.local_time }} · {{ '%.1fs' % c.duration }} · {{ c.trigger }}</p>
-            </div>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
+    {% set day_group = grouped_clips[day] %}
+    <div class="day-group">
+      <h3 class="day-title">{{ day_group.date_display }}</h3>
+      {% for name, range, _start, _end in periods %}
+        {% set clips = day_group.periods[name] %}
+        {% if clips %}
+        <details class="period-group"{% if auto_open and auto_open[0] == day and auto_open[1] == name %} open{% endif %}>
+          <summary class="period-summary">
+            <span class="period-name">{{ name }}</span>
+            <span class="period-range">{{ range }}</span>
+            <span class="period-count">{{ clips|length }} clip{% if clips|length != 1 %}s{% endif %}</span>
+          </summary>
+          <ul class="clip-list">
+            {% for c in clips %}
+            <li class="clip-item">
+              <div class="clip-media">
+                <video controls preload="metadata" poster="{{ c.thumbnail_url or '' }}" src="{{ c.url }}"></video>
+              </div>
+              <div class="clip-info">
+                <p class="title">{{ c.label }}</p>
+                <p class="narrative">{{ c.narrative }}</p>
+                <p class="meta">{{ c.local_time }} · {{ '%.1fs' % c.duration }} · {{ c.trigger }}</p>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      {% endfor %}
+    </div>
     {% endfor %}
   {% else %}
     <div class="placeholder-block">No clips yet — motion triggers will fill this gallery.</div>

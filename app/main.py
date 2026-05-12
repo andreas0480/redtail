@@ -155,19 +155,34 @@ async def timelapse_page(request: Request):
     )
 
 
+CLIP_PERIODS = [
+    ("Night",     "00:00–06:00",  0,  6),
+    ("Morning",   "06:00–12:00",  6, 12),
+    ("Afternoon", "12:00–18:00", 12, 18),
+    ("Evening",   "18:00–24:00", 18, 24),
+]
+
+
+def _period_for(hour: int) -> str:
+    for name, _range, start, end in CLIP_PERIODS:
+        if start <= hour < end:
+            return name
+    return "Evening"
+
+
 @app.get("/clips", response_class=HTMLResponse)
 async def clips_page(request: Request):
-    grouped = {}
-    
+    grouped: dict[str, dict] = {}
+    local_tz = ZoneInfo(cfg.tz)
+
     with db.connect() as c:
-        # Join clips with their corresponding event to get the narrative
         rows = c.execute("""
-            SELECT c.*, e.narrative 
+            SELECT c.*, e.narrative
             FROM clips c
             LEFT JOIN events e ON e.source = 'clip' AND e.source_id = c.id
             WHERE c.keep = 1
-            ORDER BY c.started_at DESC 
-            LIMIT 200
+            ORDER BY c.started_at DESC
+            LIMIT 1000
         """).fetchall()
 
     for row in rows:
@@ -177,8 +192,6 @@ async def clips_page(request: Request):
         except ValueError:
             continue
 
-        # Convert stored UTC timestamp to the configured local timezone
-        local_tz = ZoneInfo(cfg.tz)
         try:
             dt_utc = datetime.fromisoformat(row["started_at"])
             if dt_utc.tzinfo is None:
@@ -187,9 +200,14 @@ async def clips_page(request: Request):
         except (ValueError, TypeError):
             continue
 
-        day = dt_local.strftime("%Y-%m-%d")
-        if day not in grouped:
-            grouped[day] = []
+        day_key = dt_local.strftime("%Y-%m-%d")
+        period = _period_for(dt_local.hour)
+
+        if day_key not in grouped:
+            grouped[day_key] = {
+                "date_display": dt_local.strftime("%-d %b %Y"),
+                "periods": {p[0]: [] for p in CLIP_PERIODS},
+            }
 
         thumb_url = None
         if row["thumbnail_path"]:
@@ -200,7 +218,7 @@ async def clips_page(request: Request):
             except ValueError:
                 pass
 
-        grouped[day].append({
+        grouped[day_key]["periods"][period].append({
             "id": row["id"],
             "started_at": row["started_at"],
             "local_date": dt_local.strftime("%-d %b %Y"),
@@ -212,11 +230,26 @@ async def clips_page(request: Request):
             "thumbnail_url": thumb_url,
             "trigger": row["trigger"],
         })
-    
+
     sorted_days = sorted(grouped.keys(), reverse=True)
+    # Auto-open the period of the most recent clip in the most recent day
+    auto_open = None
+    if sorted_days:
+        latest = grouped[sorted_days[0]]["periods"]
+        for name, _, _, _ in reversed(CLIP_PERIODS):  # newest first
+            if latest[name]:
+                auto_open = (sorted_days[0], name)
+                break
+
     return templates.TemplateResponse(
         "clips.html",
-        {"request": request, "sorted_days": sorted_days, "grouped_clips": grouped},
+        {
+            "request": request,
+            "sorted_days": sorted_days,
+            "grouped_clips": grouped,
+            "periods": CLIP_PERIODS,
+            "auto_open": auto_open,
+        },
     )
 
 

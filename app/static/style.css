@@ -574,6 +574,76 @@ main {
   border-bottom: 1px solid var(--border-soft);
 }
 
+/* -------------------- collapsible period groups -------------------- */
+
+.period-group {
+  margin: 0 0 8px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.35);
+}
+
+.period-summary {
+  cursor: pointer;
+  list-style: none;          /* hide default disclosure triangle */
+  padding: 10px 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.period-summary::-webkit-details-marker { display: none; }
+.period-summary::marker { content: ""; }
+
+.period-summary::before {
+  content: "▸";
+  display: inline-block;
+  color: var(--sienna);
+  font-size: 12px;
+  width: 12px;
+  transform: rotate(0deg);
+  transition: transform 0.18s ease;
+  flex-shrink: 0;
+}
+
+.period-group[open] > .period-summary::before { transform: rotate(90deg); }
+
+.period-summary:hover { background: rgba(184,94,52,0.07); }
+
+.period-name {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.period-range {
+  font-family: var(--serif);
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.period-count {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  background: var(--paper-deep);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.period-group > .clip-list {
+  padding: 6px 12px 14px;
+}
+
 .journal h3 {
   font-family: var(--serif);
   font-weight: 600;

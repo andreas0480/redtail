@@ -795,6 +795,45 @@ footer code {
 
 /* -------------------- species page -------------------- */
 
+.species-narration {
+  background:
+    linear-gradient(180deg, rgba(184,94,52,0.05), transparent 60%),
+    var(--paper);
+}
+
+.species-narration-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.species-narration-text { flex: 1; min-width: 220px; }
+
+.species-narration-title {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 2px;
+  color: var(--ink);
+}
+
+.species-narration-sub {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-mute);
+  margin: 0;
+}
+
+.species-narration audio {
+  flex: 1;
+  min-width: 280px;
+  height: 38px;
+}
+
+
+
 .species-intro { }
 
 .species-hero {

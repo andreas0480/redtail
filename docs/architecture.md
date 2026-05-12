@@ -28,7 +28,7 @@
 │                             │                               │
 │  ┌──────────────────────────▼──────────────────────────┐   │
 │  │              FastAPI dashboard  (port 8765)          │   │
-│  │  index · clips · journal · timelapse  (HTMX)        │   │
+│  │  index · clips · journal · timelapse · species       │   │
 │  └─────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -49,12 +49,14 @@ a motion clip and inserts a row into the `clips` table.
 Runs every 60 s and picks up unanalyzed snapshots and clips. For each one it sends frames
 to the Gemini vision API with a species-specific prompt and stores the result
 (`event_type`, `confidence`, `narrative`) in the `events` table. Also generates the
-daily narrative journal entry on a 3-hour interval and at 23:55.
+daily narrative journal entry every 3 hours and at 23:55, plus a `bio_context` paragraph
+(2–3 sentences of species biology relevant to that day's events).
 
 ### `app/timelapse.py`
 At 00:10 every night it builds a per-day H.264 timelapse from the previous day's snapshots
-using ffmpeg concat demuxer. A cumulative season-wide timelapse is rebuilt after each
-nightly run.
+using the ffmpeg concat demuxer, targeting **~30 seconds** regardless of frame count (frame
+duration = 30 / frame_count, clamped to 2–25 fps). A cumulative season-wide timelapse is
+rebuilt after each nightly run.
 
 ### `app/monitor.py`
 Checks every 2 min that the RTSP stream is reachable, disk space is adequate, and the DB
@@ -63,12 +65,17 @@ is being written to. Fires a push notification via [ntfy](https://ntfy.sh) on an
 ## Database schema
 
 ```
-snapshots   (id, captured_at, path, analyzed)
-clips       (id, started_at, duration_seconds, path, trigger, analyzed, keep, label, thumbnail_path)
-events      (id, occurred_at, source, source_id, event_type, confidence, narrative, raw_json)
-daily_summaries (day PK, summary, events_count, timelapse_path, featured_image_path, created_at)
-alerts      (id, fired_at, check_name, severity, message)
+snapshots       (id, captured_at, path, analyzed)
+clips           (id, started_at, duration_seconds, path, trigger, analyzed, keep, label, thumbnail_path)
+events          (id, occurred_at, source, source_id, event_type, confidence, narrative, raw_json)
+daily_summaries (day PK, summary, events_count, timelapse_path, featured_image_path, bio_context, created_at)
+alerts          (id, fired_at, check_name, severity, message)
 ```
+
+`bio_context` is a Gemini-generated 2–3 sentence paragraph explaining the species biology
+relevant to that day's observed events (e.g. incubation physiology on a day of long sitting
+bouts; egg-laying interval on a day a new egg appeared). Added via live migration if the
+column is absent on startup.
 
 ## AI event types
 
@@ -101,12 +108,22 @@ alerts      (id, fired_at, check_name, severity, message)
       ...
   timelapses/
     daily/
-      2026-05-08.mp4
-    cumulative.mp4
+      2026-05-08.mp4    ← ~30 s per day
+    cumulative.mp4      ← full season
   thumbnails/
     clips/
     timelapses/
+      cumulative.jpg    ← mid-season frame used as poster
+      2026-05-08.jpg    ← first frame of each daily timelapse
 /state/
   events.db
   buffer/          ← rolling RTSP segments
+
+app/static/species/    ← locally-served CC images for the species page
+  male_thkraft.jpg
+  male_perched.jpg
+  female.jpg
+  eggs.jpg
+  chicks_2d.jpg
+  chicks_10d.jpg
 ```

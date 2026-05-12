@@ -533,13 +533,13 @@ main {
 }
 
 .journal-content {
-  flex: 2;
+  flex: 3;
   min-width: min(260px, 100%);
 }
 
 .journal-image,
 .journal-media {
-  flex: 1;
+  flex: 2;
   min-width: min(200px, 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

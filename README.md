@@ -12,8 +12,9 @@ field-journal narrative.
 - **Live snapshot feed** — captures a JPEG every 5 minutes via RTSP for a full timelapse record
 - **Motion detection** — frame-diff trigger clips pre-buffered RTSP footage the moment anything stirs in the box
 - **Gemini vision analysis** — every snapshot and clip is classified with an `event_type` (e.g. `incubating`, `eggs_visible`, `adult_arrives`) and a one-sentence narrative
-- **Daily journal** — Gemini writes a warm, factual 3-5 sentence journal entry from each day's events, updated every 3 hours
-- **Daily & cumulative timelapses** — per-day H.264 MP4s built at midnight; a season-wide cumulative film updated nightly
+- **Daily journal** — Gemini writes a warm, factual journal entry from each day's events, updated every 3 hours; each entry includes a biological context paragraph explaining the science behind what was observed
+- **Daily & cumulative timelapses** — per-day ~30 s H.264 MP4s built at midnight, embedded in the journal; a season-wide cumulative film updated nightly
+- **Species reference page** — comprehensive biological profile of the Common Redstart with CC-licensed photography
 - **Health monitoring** — checks RTSP stream, disk space, and DB activity every 2 min; pushes alerts via [ntfy](https://ntfy.sh)
 - **Historical backfill** — tools to import the full UniFi Protect recording history retroactively
 
@@ -23,8 +24,9 @@ field-journal narrative.
 |---|---|
 | **Home** | Latest snapshot, recent event log, today's journal summary |
 | **Clips** | Motion-triggered video gallery, grouped by day, labeled and narrated by AI |
-| **Journal** | Day-by-day narrative entries with embedded daily timelapse |
+| **Journal** | Day-by-day narrative entries with embedded daily timelapse and biological context |
 | **Timelapse** | Full-season cumulative video |
+| **Species** | Comprehensive biological profile of the Common Redstart with photography |
 
 ## Tech stack
 
@@ -79,6 +81,16 @@ All configuration is via environment variables. Copy `.env.example` to `.env` an
 | `NTFY_TOPIC` | Push notification topic (optional) |
 | `SNAPSHOT_INTERVAL_SECONDS` | Capture cadence, default 300 |
 | `MOTION_SCENE_THRESHOLD` | Frame-diff sensitivity, default 0.02 |
+
+## External access
+
+`backfill/deploy.py` and `review.py` require a `REDTAIL_HOST` environment variable pointing
+at the machine running the container:
+
+```bash
+export REDTAIL_HOST=192.168.x.x   # or hostname
+python review.py prepare
+```
 
 ## Historical backfill
 

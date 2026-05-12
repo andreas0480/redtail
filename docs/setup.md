@@ -94,6 +94,16 @@ The SQLite database and all media are in the data volume and are not affected by
 |---|---|
 | 8765 | Dashboard (HTTP) |
 
+## Running the review and deploy tools
+
+`review.py` and `backfill/deploy.py` SSH into the host machine and operate on the running
+container. They require a `REDTAIL_HOST` environment variable:
+
+```bash
+export REDTAIL_HOST=192.168.x.x   # IP or hostname of the Docker host
+python review.py prepare --since 36 --out ./review_packet
+```
+
 ## Environment variables reference
 
 See [`.env.example`](../.env.example) for full documentation of every variable.

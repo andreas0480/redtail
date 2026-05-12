@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Redtail nest box{% endblock %}</title>
+<meta name="description" content="A field journal for a kestrel nest box, with timelapse, AI event log, and motion clips.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23b85e34'/><path d='M30 55 Q50 30 70 55 Q60 60 50 58 Q40 60 30 55 Z' fill='%23f4ead6'/></svg>">
+<script src="https://unpkg.com/htmx.org@2.0.3"></script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <!-- stylized Common Redstart (passerine perched, prominent rust tail) -->
+        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <!-- body -->
+          <ellipse cx="14" cy="15" rx="7" ry="5.5" fill="currentColor"/>
+          <!-- head -->
+          <circle cx="20" cy="11" r="3.6" fill="currentColor"/>
+          <!-- beak -->
+          <path d="M23.2 10.6 L26 10.2 L23.2 11.4 Z" fill="currentColor"/>
+          <!-- eye -->
+          <circle cx="20.8" cy="10.5" r="0.6" fill="#1c1208"/>
+          <!-- tail (the redtail!) -->
+          <path d="M7 14 L2 11 L1 13 L7 17 Z" fill="#e6724a" opacity="0.95"/>
+          <!-- wing detail -->
+          <path d="M12 13 Q15 11 18 13 Q15 15 12 14 Z" fill="#1c1208" opacity="0.18"/>
+          <!-- legs -->
+          <path d="M13 20 L12 24 M16 20 L17 24" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Redtail</h1>
+        <div class="tagline">a Common Redstart nest field journal</div>
+      </div>
+    </div>
+    <nav>
+      <a href="/"           {% if request.url.path == '/' %}class="active"{% endif %}>Today</a>
+      <a href="/journal"    {% if request.url.path == '/journal' %}class="active"{% endif %}>Journal</a>
+      <a href="/timelapse"  {% if request.url.path == '/timelapse' %}class="active"{% endif %}>Timelapse</a>
+      <a href="/clips"      {% if request.url.path == '/clips' %}class="active"{% endif %}>Clips</a>
+    </nav>
+  </div>
+</header>
+
+<main class="{% block main_class %}page-wide{% endblock %}">
+{% block content %}{% endblock %}
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span class="footer-status"><span class="dot"></span> alerts via ntfy · <code>{{ ntfy_topic|default('not configured') }}</code> · <a href="/health" target="_blank" rel="noopener">Health</a></span>
+    <span>built with ffmpeg + Gemini · &copy; 2026 backyard ornithology</span>
+  </div>
+</footer>
+
+</body>
+</html>

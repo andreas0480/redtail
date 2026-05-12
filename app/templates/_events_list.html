@@ -1,0 +1,16 @@
+{% if events %}
+<ul class="event-list">
+  {% for e in events %}
+  <li class="event event-{{ e.event_type }}">
+    <span class="event-time">{{ e.occurred_at[11:16] }}</span>
+    <div class="event-body">
+      <span class="event-type">{{ e.event_type|replace('_', ' ') }}</span>
+      <span class="event-narrative">{{ e.narrative }}</span>
+    </div>
+    {% if e.confidence is not none %}<span class="event-conf">{{ '%.0f%%' % (e.confidence * 100) }}</span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="placeholder-block">The log fills in as snapshots are analyzed.</div>
+{% endif %}

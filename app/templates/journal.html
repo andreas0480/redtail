@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Journal · Redtail{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <h2 class="card-title">Field journal</h2>
+  <p class="card-subtitle">A daily narrative composed at 23:55 from the day's events.</p>
+  {% if summaries %}
+  <ol class="journal">
+    {% for s in summaries %}
+    <li class="journal-entry">
+      <div class="journal-content">
+        <h3>{{ s.day }} <small>· {{ s.events_count }} events observed</small></h3>
+        <p>{{ s.summary }}</p>
+      </div>
+      {% if s.timelapse_url %}
+      <div class="journal-media">
+        <video controls preload="metadata" poster="{{ s.featured_image_url or '' }}" src="{{ s.timelapse_url }}"></video>
+      </div>
+      {% elif s.featured_image_url %}
+      <div class="journal-media">
+        <img src="{{ s.featured_image_url }}" alt="Featured image for {{ s.day }}">
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+    <div class="placeholder-block">The first entry will be written at the end of today.</div>
+  {% endif %}
+</section>
+
+{% endblock %}

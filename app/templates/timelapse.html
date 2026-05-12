@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Timelapse · Redtail{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <h2 class="card-title">Cumulative · entire season</h2>
+  <p class="card-subtitle">A single video that walks through the whole story. Rebuilt every night.</p>
+  {% if cumulative_url %}
+    <video controls preload="metadata" poster="{{ cumulative_thumbnail_url or '' }}" src="{{ cumulative_url }}" class="video-large"></video>
+  {% else %}
+    <div class="placeholder-block">Renders after the first full day of snapshots.</div>
+  {% endif %}
+</section>
+
+{% endblock %}

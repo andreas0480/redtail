@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Clips · Redtail{% endblock %}
+
+{% block content %}
+
+<section class="card">
+  <h2 class="card-title">Motion clips</h2>
+  <p class="card-subtitle">Recorded automatically when something stirs in the box. Each action is labeled and narrated by Gemini.</p>
+  
+  {% if sorted_days %}
+    {% for day in sorted_days %}
+      <div class="day-group">
+        <h3 class="day-title">{{ day }}</h3>
+        <ul class="clip-list">
+          {% for c in grouped_clips[day] %}
+          <li class="clip-item">
+            <div class="clip-media">
+              <video controls preload="metadata" poster="{{ c.thumbnail_url or '' }}" src="{{ c.url }}"></video>
+            </div>
+            <div class="clip-info">
+              <p class="title">{{ c.label }}</p>
+              <p class="narrative">{{ c.narrative }}</p>
+              <p class="meta">{{ c.started_at[11:16] }} · {{ '%.1fs' % c.duration }} · {{ c.trigger }}</p>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="placeholder-block">No clips yet — motion triggers will fill this gallery.</div>
+  {% endif %}
+</section>
+
+{% endblock %}

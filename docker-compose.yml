@@ -1,0 +1,34 @@
+services:
+  redtail:
+    build: .
+    container_name: redtail
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${DASHBOARD_PORT:-8765}:8765"
+    cap_add:
+      - SYS_ADMIN
+      - DAC_READ_SEARCH
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/fuse:/dev/fuse
+    volumes:
+      - redtail_data:/data
+      - redtail_state:/state
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8765/health/quick"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+volumes:
+  redtail_data:
+    driver: local
+    driver_opts:
+      type: cifs
+      o: "username=,password=,vers=3.0,file_mode=0664,dir_mode=0775,iocharset=utf8"
+      device: "//${SMB_HOST}/${SMB_SHARE}/${SMB_SUBDIR}"
+  redtail_state:
+    driver: local

@@ -1,0 +1,33 @@
+# Secrets & local config
+.env
+.env.local
+backfill/.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+
+# Data (never commit media or the live DB)
+data/
+backfill/work/
+backfill/batches/
+backfill/results/
+backfill/clip_frames/
+*.db
+*.db-wal
+*.db-shm
+
+# Build / IDE
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Claude project memory (local only)
+.claude/projects/

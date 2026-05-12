@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Today · Redtail{% endblock %}
+{% block main_class %}page-today{% endblock %}
+
+{% block content %}
+
+<section class="card snapshot-frame"
+         hx-get="/fragments/latest"
+         hx-trigger="every 30s"
+         hx-swap="innerHTML">
+  {% include "_latest.html" %}
+</section>
+
+<section class="card"
+         hx-get="/fragments/notable"
+         hx-trigger="every 300s"
+         hx-swap="innerHTML">
+  {% include "_notable.html" %}
+</section>
+
+<section class="card">
+  <div class="events-header">
+    <h2 class="card-title">AI event log</h2>
+    <span class="live-dot">live</span>
+  </div>
+  <p class="card-subtitle">Each frame narrated by Gemini Vision. Refreshes every minute.</p>
+  <div id="event-list"
+       hx-get="/fragments/events"
+       hx-trigger="every 60s"
+       hx-swap="innerHTML">
+    {% include "_events_list.html" %}
+  </div>
+</section>
+
+{% endblock %}

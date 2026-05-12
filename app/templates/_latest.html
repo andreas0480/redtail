@@ -1,0 +1,9 @@
+{% if latest_snapshot_url %}
+  <img src="{{ latest_snapshot_url }}" alt="latest snapshot from the nest box">
+  <div class="snapshot-meta">
+    <span class="label">Latest frame</span>
+    <time datetime="{{ latest_captured_at }}">{{ latest_captured_at[11:16] }} · {{ latest_captured_at[:10] }}</time>
+  </div>
+{% else %}
+  <div class="placeholder">The first snapshot arrives within a few minutes of startup.</div>
+{% endif %}

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -175,11 +176,21 @@ async def clips_page(request: Request):
             rel = path.relative_to(cfg.clips_dir).as_posix()
         except ValueError:
             continue
-        
-        day = row["started_at"][:10]
+
+        # Convert stored UTC timestamp to the configured local timezone
+        local_tz = ZoneInfo(cfg.tz)
+        try:
+            dt_utc = datetime.fromisoformat(row["started_at"])
+            if dt_utc.tzinfo is None:
+                dt_utc = dt_utc.replace(tzinfo=ZoneInfo("UTC"))
+            dt_local = dt_utc.astimezone(local_tz)
+        except (ValueError, TypeError):
+            continue
+
+        day = dt_local.strftime("%Y-%m-%d")
         if day not in grouped:
             grouped[day] = []
-        
+
         thumb_url = None
         if row["thumbnail_path"]:
             try:
@@ -192,6 +203,8 @@ async def clips_page(request: Request):
         grouped[day].append({
             "id": row["id"],
             "started_at": row["started_at"],
+            "local_date": dt_local.strftime("%-d %b %Y"),
+            "local_time": dt_local.strftime("%H:%M:%S"),
             "duration": row["duration_seconds"],
             "label": row["label"] or "(unlabeled)",
             "narrative": row["narrative"] or "",

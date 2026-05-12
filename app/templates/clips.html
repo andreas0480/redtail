@@ -20,7 +20,7 @@
             <div class="clip-info">
               <p class="title">{{ c.label }}</p>
               <p class="narrative">{{ c.narrative }}</p>
-              <p class="meta">{{ c.started_at[11:16] }} · {{ '%.1fs' % c.duration }} · {{ c.trigger }}</p>
+              <p class="meta">{{ c.local_date }} · {{ c.local_time }} · {{ '%.1fs' % c.duration }} · {{ c.trigger }}</p>
             </div>
           </li>
           {% endfor %}

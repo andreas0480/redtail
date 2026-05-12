@@ -46,6 +46,13 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 STATIC_DIR = Path(__file__).parent / "static"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+# Cache-buster derived from style.css mtime, exposed to every template
+try:
+    _ASSET_VERSION = str(int((STATIC_DIR / "style.css").stat().st_mtime))
+except OSError:
+    _ASSET_VERSION = "1"
+templates.env.globals["asset_v"] = _ASSET_VERSION
+
 
 def _job_snapshot():
     capture_snapshot(cfg, db)

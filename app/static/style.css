@@ -528,18 +528,18 @@ main {
 .journal-entry {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  grid-template-areas:
+    "head head"
+    "body media";
+  column-gap: 24px;
+  row-gap: 8px;
   align-items: start;
 }
 
-.journal-content {
-  min-width: 0;
-}
-
-/* Align the video with the paragraph, not the heading */
-.journal-media {
-  margin-top: 34px;   /* approximate height of h3 + small gap */
-}
+.journal-head { grid-area: head; margin: 0 0 4px; }
+.journal-content { grid-area: body; min-width: 0; }
+.journal-media,
+.journal-image { grid-area: media; }
 
 .journal-image,
 .journal-media {
@@ -875,8 +875,11 @@ footer code {
   nav a { padding: 7px 11px; font-size: 13px; white-space: nowrap; }
 
   /* journal: single column on small screens */
-  .journal-entry { grid-template-columns: 1fr; gap: 14px; }
-  .journal-media { margin-top: 0; }
+  .journal-entry {
+    grid-template-columns: 1fr;
+    grid-template-areas: "head" "body" "media";
+    row-gap: 12px;
+  }
   .journal li { padding-left: 28px; }
   .journal::before { left: 8px; }
   .journal li::before { left: 1px; width: 12px; height: 12px; top: 5px; }

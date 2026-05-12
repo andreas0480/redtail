@@ -11,8 +11,8 @@
     {% for s in summaries %}
     <li>
       <div class="journal-entry">
+        <h3 class="journal-head">{{ s.day }} <small>· {{ s.events_count }} events observed</small></h3>
         <div class="journal-content">
-          <h3>{{ s.day }} <small>· {{ s.events_count }} events observed</small></h3>
           <p>{{ s.summary }}</p>
           {% if s.bio_context %}
           <p class="bio-context">{{ s.bio_context }}</p>

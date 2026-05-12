@@ -9,23 +9,25 @@
   {% if summaries %}
   <ol class="journal">
     {% for s in summaries %}
-    <li class="journal-entry">
-      <div class="journal-content">
-        <h3>{{ s.day }} <small>· {{ s.events_count }} events observed</small></h3>
-        <p>{{ s.summary }}</p>
-        {% if s.bio_context %}
-        <p class="bio-context">{{ s.bio_context }}</p>
+    <li>
+      <div class="journal-entry">
+        <div class="journal-content">
+          <h3>{{ s.day }} <small>· {{ s.events_count }} events observed</small></h3>
+          <p>{{ s.summary }}</p>
+          {% if s.bio_context %}
+          <p class="bio-context">{{ s.bio_context }}</p>
+          {% endif %}
+        </div>
+        {% if s.timelapse_url %}
+        <div class="journal-media">
+          <video controls preload="metadata" poster="{{ s.featured_image_url or '' }}" src="{{ s.timelapse_url }}"></video>
+        </div>
+        {% elif s.featured_image_url %}
+        <div class="journal-media">
+          <img src="{{ s.featured_image_url }}" alt="Featured image for {{ s.day }}">
+        </div>
         {% endif %}
       </div>
-      {% if s.timelapse_url %}
-      <div class="journal-media">
-        <video controls preload="metadata" poster="{{ s.featured_image_url or '' }}" src="{{ s.timelapse_url }}"></video>
-      </div>
-      {% elif s.featured_image_url %}
-      <div class="journal-media">
-        <img src="{{ s.featured_image_url }}" alt="Featured image for {{ s.day }}">
-      </div>
-      {% endif %}
     </li>
     {% endfor %}
   </ol>

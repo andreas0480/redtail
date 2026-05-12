@@ -532,13 +532,13 @@ main {
   align-items: start;
 }
 
-/* When there is no media, content spans both columns */
-.journal-entry:not(:has(.journal-media)):not(:has(.journal-image)) .journal-content {
-  grid-column: 1 / -1;
-}
-
 .journal-content {
   min-width: 0;
+}
+
+/* Align the video with the paragraph, not the heading */
+.journal-media {
+  margin-top: 34px;   /* approximate height of h3 + small gap */
 }
 
 .journal-image,
@@ -876,7 +876,7 @@ footer code {
 
   /* journal: single column on small screens */
   .journal-entry { grid-template-columns: 1fr; gap: 14px; }
-  .journal-entry:not(:has(.journal-media)):not(:has(.journal-image)) .journal-content { grid-column: 1; }
+  .journal-media { margin-top: 0; }
   .journal li { padding-left: 28px; }
   .journal::before { left: 8px; }
   .journal li::before { left: 1px; width: 12px; height: 12px; top: 5px; }

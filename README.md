@@ -58,7 +58,7 @@ See [`docs/architecture.md`](docs/architecture.md) for a detailed breakdown.
 ## Quick start
 
 ```bash
-git clone https://github.com/belitz/redtail.git
+git clone https://github.com/andreas0480/redtail.git
 cd redtail
 cp .env.example .env
 # Edit .env — at minimum set RTSP_URL, GEMINI_API_KEY, and TZ

@@ -13,7 +13,7 @@
 ## 1. Clone and configure
 
 ```bash
-git clone https://github.com/belitz/redtail.git
+git clone https://github.com/andreas0480/redtail.git
 cd redtail
 cp .env.example .env
 $EDITOR .env

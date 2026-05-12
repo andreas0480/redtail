@@ -89,15 +89,15 @@ def insert_snapshots():
     return inserted, skipped
 
 def insert_clips():
-    src_rows = src.execute("SELECT started_at, duration_seconds, path, trigger, keep, label FROM clips").fetchall()
+    src_rows = src.execute("SELECT started_at, duration_seconds, path, trigger, keep, label, analyzed FROM clips").fetchall()
     inserted = 0; skipped = 0
-    for started_at, dur, path, trig, keep, label in src_rows:
+    for started_at, dur, path, trig, keep, label, analyzed in src_rows:
         # Translate local backfill path to production container path
         if "clips/" in path:
             path = "/data/clips/" + path.split("clips/")[1]
         cur = dst.execute(
-            "INSERT OR IGNORE INTO clips (started_at, duration_seconds, path, trigger, analyzed, keep, label) VALUES (?, ?, ?, ?, 1, ?, ?)",
-            (started_at, dur, path, trig, keep, label),
+            "INSERT OR IGNORE INTO clips (started_at, duration_seconds, path, trigger, analyzed, keep, label) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (started_at, dur, path, trig, analyzed, keep, label),
         )
         if cur.rowcount:
             inserted += 1

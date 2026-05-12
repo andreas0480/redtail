@@ -37,17 +37,26 @@ def ssh(cmd: str, capture: bool = True) -> str:
     return ""
 
 
+def _combine(summary: str, bio_context: str | None) -> str:
+    """Return the full text that gets narrated: summary + biological context."""
+    s = (summary or "").strip()
+    b = (bio_context or "").strip()
+    if not b:
+        return s
+    return f"{s}\n\n{b}"
+
+
 def fetch_pending_days() -> list[tuple[str, str]]:
-    """Returns [(day, summary), ...] for entries without a narration."""
+    """Returns [(day, narration_text), ...] for entries without a narration."""
     py = (
         "import sqlite3, json, sys\n"
         "c = sqlite3.connect('/state/events.db')\n"
-        "rows = c.execute(\"SELECT day, summary FROM daily_summaries WHERE narration_path IS NULL OR narration_path='' ORDER BY day\").fetchall()\n"
+        "rows = c.execute(\"SELECT day, summary, bio_context FROM daily_summaries WHERE narration_path IS NULL OR narration_path='' ORDER BY day\").fetchall()\n"
         "print(json.dumps(rows))\n"
     )
     out = ssh(f"docker exec -i redtail python3 - <<'PYEOF'\n{py}\nPYEOF\n")
     import json
-    return [(d, s) for d, s in json.loads(out.strip().splitlines()[-1])]
+    return [(d, _combine(s, b)) for d, s, b in json.loads(out.strip().splitlines()[-1])]
 
 
 _SENTENCE_RE = None
@@ -61,8 +70,17 @@ def _sentences(text: str) -> list[str]:
     return parts or [text]
 
 
-def _chunk(text: str, max_chars: int = 450) -> list[str]:
-    """Group sentences into chunks under max_chars so XTTS won't exceed its 400-token limit."""
+def _chunk(text: str, max_chars: int = 220) -> list[str]:
+    """Group sentences into chunks.
+
+    XTTS-v2 has two hard limits per synthesis call:
+      - input: ~400 GPT tokens (~1500 chars)
+      - output: ~27 seconds of audio  (this is the real ceiling)
+
+    Aiming for ~220 char chunks gives ~12-15 s of audio each, well under the
+    output limit. Most journal sentences are 80-200 chars so chunks typically
+    hold 1-2 sentences.
+    """
     chunks: list[str] = []
     current = ""
     for s in _sentences(text):
@@ -153,16 +171,15 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     if args.day:
-        # Fetch summary for that day specifically
         py = (
             "import sqlite3, json\n"
             "c = sqlite3.connect('/state/events.db')\n"
-            f"r = c.execute(\"SELECT day, summary FROM daily_summaries WHERE day = '{args.day}'\").fetchone()\n"
+            f"r = c.execute(\"SELECT day, summary, bio_context FROM daily_summaries WHERE day = '{args.day}'\").fetchone()\n"
             "print(json.dumps(list(r) if r else []))\n"
         )
         import json
         row = json.loads(ssh(f"docker exec -i redtail python3 - <<'PYEOF'\n{py}\nPYEOF\n").strip().splitlines()[-1])
-        days = [tuple(row)] if row else []
+        days = [(row[0], _combine(row[1], row[2]))] if row else []
     else:
         days = fetch_pending_days()
 

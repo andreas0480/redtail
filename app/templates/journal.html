@@ -14,25 +14,27 @@
         <h3 class="journal-head">{{ s.day }} <small>· {{ s.events_count }} events observed</small></h3>
         <div class="journal-content">
           <p>{{ s.summary }}</p>
+          {% if s.bio_context %}
+          <p class="bio-context">{{ s.bio_context }}</p>
+          {% endif %}
+        </div>
+        <div class="journal-media-stack">
+          {% if s.timelapse_url %}
+          <div class="journal-media">
+            <video controls preload="metadata" poster="{{ s.featured_image_url or '' }}" src="{{ s.timelapse_url }}"></video>
+          </div>
+          {% elif s.featured_image_url %}
+          <div class="journal-media">
+            <img src="{{ s.featured_image_url }}" alt="Featured image for {{ s.day }}">
+          </div>
+          {% endif %}
           {% if s.narration_url %}
           <div class="journal-audio">
             <span class="journal-audio-label">Read aloud</span>
             <audio controls preload="none" src="{{ s.narration_url }}"></audio>
           </div>
           {% endif %}
-          {% if s.bio_context %}
-          <p class="bio-context">{{ s.bio_context }}</p>
-          {% endif %}
         </div>
-        {% if s.timelapse_url %}
-        <div class="journal-media">
-          <video controls preload="metadata" poster="{{ s.featured_image_url or '' }}" src="{{ s.timelapse_url }}"></video>
-        </div>
-        {% elif s.featured_image_url %}
-        <div class="journal-media">
-          <img src="{{ s.featured_image_url }}" alt="Featured image for {{ s.day }}">
-        </div>
-        {% endif %}
       </div>
     </li>
     {% endfor %}

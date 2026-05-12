@@ -538,8 +538,9 @@ main {
 
 .journal-head { grid-area: head; margin: 0 0 4px; }
 .journal-content { grid-area: body; min-width: 0; }
+.journal-media-stack { grid-area: media; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .journal-media,
-.journal-image { grid-area: media; }
+.journal-image { width: 100%; }
 
 .journal-image,
 .journal-media {

@@ -775,14 +775,24 @@ footer code {
 
 .species-figure--small img { max-height: 200px; }
 
-.species-figure figcaption {
+.species-figure figcaption,
+.species-hero-image figcaption {
   font-size: 12px;
   color: var(--ink-mute);
   margin-top: 6px;
   line-height: 1.4;
 }
 
-.species-figure figcaption a { color: var(--sienna); }
+.species-figure figcaption a,
+.species-hero-image figcaption a { color: var(--sienna); }
+
+.species-hero-image figure { margin: 0; }
+.species-hero-image img {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  display: block;
+}
 
 .species-eggs-row,
 .species-chicks-row {

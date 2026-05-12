@@ -15,6 +15,7 @@ venv/
 # Data (never commit media or the live DB)
 data/
 backfill/work/
+backfill/work_today/
 backfill/batches/
 backfill/results/
 backfill/clip_frames/

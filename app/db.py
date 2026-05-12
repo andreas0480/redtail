@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS daily_summaries (
     events_count INTEGER NOT NULL DEFAULT 0,
     timelapse_path TEXT,
     featured_image_path TEXT,
+    bio_context TEXT,
     created_at TEXT NOT NULL
 );
 
@@ -67,6 +68,10 @@ class Database:
         self._lock = threading.Lock()
         with self._connect() as c:
             c.executescript(_SCHEMA)
+            # Live migration: add bio_context if upgrading from older schema
+            cols = {row[1] for row in c.execute("PRAGMA table_info(daily_summaries)")}
+            if "bio_context" not in cols:
+                c.execute("ALTER TABLE daily_summaries ADD COLUMN bio_context TEXT")
             c.commit()
 
     def _connect(self) -> sqlite3.Connection:
@@ -182,19 +187,22 @@ class Database:
             return row
 
     def upsert_daily_summary(
-        self, day: str, summary: str, events_count: int, timelapse_path: Optional[str], featured_image_path: Optional[str], created_at: str
+        self, day: str, summary: str, events_count: int, timelapse_path: Optional[str],
+        featured_image_path: Optional[str], created_at: str, bio_context: Optional[str] = None
     ) -> None:
         with self.connect() as c:
             c.execute(
-                """INSERT INTO daily_summaries (day, summary, events_count, timelapse_path, featured_image_path, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?)
+                """INSERT INTO daily_summaries
+                       (day, summary, events_count, timelapse_path, featured_image_path, bio_context, created_at)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)
                        ON CONFLICT(day) DO UPDATE SET
                        summary=excluded.summary,
                        events_count=excluded.events_count,
                        timelapse_path=excluded.timelapse_path,
                        featured_image_path=excluded.featured_image_path,
+                       bio_context=excluded.bio_context,
                        created_at=excluded.created_at""",
-                (day, summary, events_count, timelapse_path, featured_image_path, created_at),
+                (day, summary, events_count, timelapse_path, featured_image_path, bio_context, created_at),
             )
 
     def daily_summaries(self, limit: int = 30) -> list[sqlite3.Row]:

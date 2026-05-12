@@ -107,6 +107,17 @@ Write a warm, factual 3-5 sentence journal entry in English using local Stockhol
 Focus on what the birds actually did. Do not claim eggs were laid on a day unless that date falls on or after {FIRST_EGG_DATE}.
 Output only the summary text, no preamble."""
 
+BIO_CONTEXT_PROMPT = """You are a field ornithologist writing the biological footnote for a Common Redstart (Phoenicurus phoenicurus) nest box journal.
+
+Today's journal entry ({day}):
+"{summary}"
+
+Write exactly 2-3 sentences of biological background that directly explains the science behind what was observed today.
+Draw on real species facts: breeding phenology, incubation physiology, egg-laying biology, chick development, foraging behaviour, migration, or pair-bonding as relevant to the day's events.
+Be specific — connect the biology to what the camera actually saw. Write for a curious general reader, not a specialist.
+Do not repeat the narrative; illuminate it.
+Output only the 2-3 sentences, no heading, no preamble."""
+
 
 class Analyzer:
     def __init__(self, cfg: Config, db: Database):
@@ -309,12 +320,23 @@ class Analyzer:
             summary = (resp.text or "").strip()
             if not summary:
                 return None
+
+            # Generate biological context paragraph
+            bio_context = None
+            try:
+                bio_prompt = BIO_CONTEXT_PROMPT.format(day=day, summary=summary)
+                bio_resp = self.model.generate_content(bio_prompt)
+                bio_context = (bio_resp.text or "").strip() or None
+            except Exception:
+                log.warning("bio context generation failed for %s", day)
+
             self.db.upsert_daily_summary(
                 day=day,
                 summary=summary,
                 events_count=len(events),
                 timelapse_path=None,
                 featured_image_path=featured_image_path,
+                bio_context=bio_context,
                 created_at=now_iso(),
             )
             log.info("daily summary for %s written (%d events)", day, len(events))

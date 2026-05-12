@@ -13,6 +13,9 @@
       <div class="journal-content">
         <h3>{{ s.day }} <small>· {{ s.events_count }} events observed</small></h3>
         <p>{{ s.summary }}</p>
+        {% if s.bio_context %}
+        <p class="bio-context">{{ s.bio_context }}</p>
+        {% endif %}
       </div>
       {% if s.timelapse_url %}
       <div class="journal-media">

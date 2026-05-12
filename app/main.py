@@ -222,6 +222,7 @@ async def journal_page(request: Request):
             "events_count": row["events_count"],
             "featured_image_url": img_url,
             "timelapse_url": tl_url,
+            "bio_context": row["bio_context"],
         })
 
     return templates.TemplateResponse(
@@ -231,6 +232,11 @@ async def journal_page(request: Request):
 
 
 # ---------- HTMX fragments ----------
+
+
+@app.get("/species", response_class=HTMLResponse)
+async def species_page(request: Request):
+    return templates.TemplateResponse("species.html", {"request": request})
 
 
 @app.get("/fragments/events", response_class=HTMLResponse)

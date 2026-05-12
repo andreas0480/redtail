@@ -16,7 +16,7 @@ from .util import ensure_dir, now_iso, run_ffmpeg
 
 log = logging.getLogger(__name__)
 
-_SCENE_RE = re.compile(r"pts_time:([0-9.]+).*scene_score=([0-9.]+)", re.DOTALL)
+_SCENE_RE = re.compile(r"lavfi\.scene_score=([0-9.]+)")
 
 
 class MotionDetector:
@@ -64,11 +64,12 @@ class MotionDetector:
                     if not m:
                         continue
                     try:
-                        score = float(m.group(2))
+                        score = float(m.group(1))
                     except ValueError:
                         continue
-                    if score >= self.cfg.motion_scene_threshold:
-                        self._on_trigger(score)
+                    # The select filter has already gated on motion_scene_threshold,
+                    # so anything that reaches us has crossed the bar.
+                    self._on_trigger(score)
                 rc = self.proc.wait() if self.proc else -1
                 if self._stop.is_set():
                     return
@@ -91,7 +92,7 @@ class MotionDetector:
             "-loglevel", "info",
             "-rtsp_transport", "tcp",
             "-i", self.cfg.rtsp_url,
-            "-vf", f"fps=2,scale=320:-2,select='gte(scene\\,{self.cfg.motion_scene_threshold})',showinfo",
+            "-vf", f"fps=2,scale=320:-2,select='gte(scene\\,{self.cfg.motion_scene_threshold})',metadata=print",
             "-f", "null",
             "-",
         ]

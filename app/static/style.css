@@ -533,14 +533,14 @@ main {
 }
 
 .journal-content {
-  flex: 1;
-  min-width: min(300px, 100%);
+  flex: 2;
+  min-width: min(260px, 100%);
 }
 
 .journal-image,
 .journal-media {
-  flex-shrink: 0;
-  width: 280px;
+  flex: 1;
+  min-width: min(200px, 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -873,8 +873,8 @@ footer code {
 
   /* journal: stack video below text */
   .journal-entry { flex-direction: column; gap: 14px; }
-  .journal-content { min-width: 0; width: 100%; }
-  .journal-media { width: 100%; flex-shrink: unset; }
+  .journal-content { min-width: 0; flex: none; width: 100%; }
+  .journal-media { min-width: 0; flex: none; width: 100%; }
   .journal li { padding-left: 28px; }
   .journal::before { left: 8px; }
   .journal li::before { left: 1px; width: 12px; height: 12px; top: 5px; }

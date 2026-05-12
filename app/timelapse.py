@@ -17,7 +17,7 @@ class TimelapseBuilder:
         self.cfg = cfg
         self.db = db
 
-    def build_daily(self, day: Optional[str] = None, fps: int = 24) -> Optional[Path]:
+    def build_daily(self, day: Optional[str] = None, target_seconds: int = 30) -> Optional[Path]:
         day = day or (datetime.now().astimezone() - timedelta(seconds=60)).strftime("%Y-%m-%d")
         src = self.cfg.snapshots_dir / day
         if not src.is_dir():
@@ -41,8 +41,12 @@ class TimelapseBuilder:
             except Exception:
                 log.exception("failed to save timelapse thumbnail")
 
+        # Spread frames evenly across target_seconds; clamp to 2–25 fps
+        frame_dur = target_seconds / len(images)
+        frame_dur = max(1.0 / 25, min(0.5, frame_dur))
+
         list_file.write_text(
-            "".join(f"file '{p.as_posix()}'\nduration {1.0/fps:.5f}\n" for p in images)
+            "".join(f"file '{p.as_posix()}'\nduration {frame_dur:.5f}\n" for p in images)
             + f"file '{images[-1].as_posix()}'\n",
             encoding="utf-8",
         )

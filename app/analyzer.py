@@ -107,6 +107,13 @@ GROUND TRUTH:
 
 Write a warm, factual 3-5 sentence journal entry in English using local Stockholm time.
 Focus on what the birds actually did. Do not claim eggs were laid on a day unless that date falls on or after {FIRST_EGG_DATE}.
+
+VOICE: this is a naturalist's field journal, NOT a technical report. NEVER mention:
+  - "the AI", "the model", "the camera's count", "miscount", "misidentified", "discrepancy"
+  - the feather hallucination, the egg-count fluctuation, or any technical artifact
+  - anything about the monitoring system itself
+Apply the ground truth silently — write only about the birds and their behaviour.
+
 Output only the summary text, no preamble. Do NOT prefix with "Date:", "Day:", "Summary:", or any heading — the date is already shown above the entry."""
 
 BIO_CONTEXT_PROMPT = """You are a field ornithologist writing the biological footnote for a Common Redstart (Phoenicurus phoenicurus) nest box journal.
@@ -355,20 +362,26 @@ def _to_float(v: Any) -> Optional[float]:
         return None
 
 
-_HEADING_LINE = re.compile(
-    r"^\s*(?:date|day|summary|today)\s*[:\-]\s*\S.*$",
-    re.IGNORECASE | re.MULTILINE,
-)
+_HEADING_PATTERNS = [
+    # "Date: 2026-05-13", "Day: ...", "Summary: ...", "Today: ..."
+    re.compile(r"^\s*(?:date|day|summary|today)\s*[:\-]\s*\S.*$", re.IGNORECASE),
+    # Bare ISO date: "2026-05-13" or "2026-05-13:" or "2026-05-13 —"
+    re.compile(r"^\s*\d{4}-\d{2}-\d{2}\s*[:.\-—]?\s*$"),
+    # "May 13, 2026" / "May 13:" / "May 13, 2026:" / "May 13th, 2026:"
+    re.compile(
+        r"^\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?\s*[:.\-—]?\s*$",
+        re.IGNORECASE,
+    ),
+]
 
 
 def _strip_heading(text: str) -> str:
-    """Remove leading 'Date: …', 'Day: …', etc. lines that Gemini sometimes prefixes."""
+    """Remove leading 'Date: …', 'May 13, 2026:', bare ISO date, etc. lines."""
     if not text:
         return text
     lines = text.lstrip().split("\n")
-    while lines and _HEADING_LINE.match(lines[0]):
+    while lines and any(p.match(lines[0]) for p in _HEADING_PATTERNS):
         lines.pop(0)
-    # Also drop a leading blank line left behind
     while lines and not lines[0].strip():
         lines.pop(0)
     return "\n".join(lines).strip()

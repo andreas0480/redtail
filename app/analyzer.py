@@ -41,6 +41,7 @@ CURRENT TIMELINE FACTS (use these to constrain your answer):
 - Before {FIRST_EGG_DATE}: zero eggs in the nest. Any bright object is nest material, not an egg.
 - Earliest possible hatch date: {EARLIEST_HATCH_DATE}
 - The image is timestamped {{capture_time}}. Days since {FIRST_EGG_DATE} = max possible eggs.
+- KNOWN VISUAL HAZARD: a curled white feather rests at the top-right edge of the egg cluster. It is light-coloured and oval, and is consistently misclassified as a sixth sky-blue egg. Disregard pale objects at the cluster's edge that do not match the cluster's blue tint. The current clutch is FIVE eggs as of 2026-05-12; if you count more than five, recount excluding the feather.
 
 VISUAL CUES — what each event_type ACTUALLY looks like:
 - "empty": nest cup visible with no adult and no eggs. Use when you see ONLY moss/grass/feathers.
@@ -98,8 +99,9 @@ Events observed by AI today (oldest to newest):
 
 GROUND TRUTH:
 - First egg: {FIRST_EGG_DATE}. One egg per day. Before {FIRST_EGG_DATE}: the female was preparing the nest, not incubating eggs.
-- Egg count by date: May 8=1, May 9=2, May 10=3, May 11=4, May 12=5. The clutch is still growing — do NOT write "clutch complete".
-- When egg counts increase through the day (1 egg at dawn → 3 by midday), that is the camera getting a clearer view as the adult shifts, not new eggs being laid. One egg per day, always in the morning.
+- Egg count by date: May 8=1, May 9=2, May 10=3, May 11=4, May 12=5. The clutch is currently FIVE eggs.
+- KNOWN HALLUCINATION: a curled white feather rests at the top-right of the egg cluster. The AI consistently misidentifies this feather as a sixth sky-blue egg. There is NO sixth egg. Any event claiming 6 or 7 eggs is wrong — write "five eggs" or "five sky-blue eggs" instead.
+- One egg per day, always laid in the morning. When egg counts increase through the day, this is the camera getting a clearer view, not new eggs being laid.
 - No chicks or feeding before {EARLIEST_HATCH_DATE}.
 - Timestamps are UTC; Stockholm is UTC+2 in summer. Do not write "UTC" in your output.
 

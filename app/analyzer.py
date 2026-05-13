@@ -3,8 +3,10 @@ import logging
 import re
 import subprocess
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
+from zoneinfo import ZoneInfo
 
 import google.generativeai as genai
 
@@ -91,40 +93,29 @@ Return ONLY this JSON:
   "narrative": "one clear sentence describing what happens in this clip"
 }}"""
 
-DAILY_PROMPT_TEMPLATE = f"""You are writing the daily journal entry for a Common Redstart (Phoenicurus phoenicurus) nest box.
-Date: {{day}}
-Events observed by AI today (oldest to newest):
+DAILY_PROMPT_TEMPLATE = f"""You are writing the daily journal entry for a Common Redstart (Phoenicurus phoenicurus) nest box. Date: {{day}}.
+
+Events observed (oldest to newest, times in local time):
 
 {{events}}
 
-GROUND TRUTH:
-- First egg: {FIRST_EGG_DATE}. One egg per day. Before {FIRST_EGG_DATE}: the female was preparing the nest, not incubating eggs.
-- Egg count by date: May 8=1, May 9=2, May 10=3, May 11=4, May 12=5. The clutch is currently FIVE eggs.
-- KNOWN HALLUCINATION: a curled white feather rests at the top-right of the egg cluster. The AI consistently misidentifies this feather as a sixth sky-blue egg. There is NO sixth egg. Any event claiming 6 or 7 eggs is wrong — write "five eggs" or "five sky-blue eggs" instead.
-- One egg per day, always laid in the morning. When egg counts increase through the day, this is the camera getting a clearer view, not new eggs being laid.
-- No chicks or feeding before {EARLIEST_HATCH_DATE}.
-- Timestamps are UTC; Stockholm is UTC+2 in summer. Do not write "UTC" in your output.
+Facts to apply silently:
+- First egg laid {FIRST_EGG_DATE}. One egg per day. The clutch is currently five eggs — treat any reading of six or more as five.
+- Hatching cannot occur before {EARLIEST_HATCH_DATE}; any chick or feeding reading before then is wrong.
 
-Write a warm, factual 3-5 sentence journal entry in English using local Stockholm time.
-Focus on what the birds actually did. Do not claim eggs were laid on a day unless that date falls on or after {FIRST_EGG_DATE}.
+Write a warm, naturalist's field-journal entry of three to five sentences about what the birds did today. Use natural phrasings for time ("just before dawn", "in the late afternoon") rather than clock readings. Do not name the location or timezone. Do not mention the camera, AI, counts, feathers, miscounts, or any monitoring artifact — apply the facts above invisibly.
 
-VOICE: this is a naturalist's field journal, NOT a technical report. NEVER mention:
-  - "the AI", "the model", "the camera's count", "miscount", "misidentified", "discrepancy"
-  - the feather hallucination, the egg-count fluctuation, or any technical artifact
-  - anything about the monitoring system itself
-Apply the ground truth silently — write only about the birds and their behaviour.
-
-Output only the summary text, no preamble. Do NOT prefix with "Date:", "Day:", "Summary:", or any heading — the date is already shown above the entry."""
+Output the entry text only, with no heading, date prefix, or preamble."""
 
 BIO_CONTEXT_PROMPT = """You are a field ornithologist writing the biological footnote for a Common Redstart (Phoenicurus phoenicurus) nest box journal.
 
 Today's journal entry ({day}):
 "{summary}"
 
-Write exactly 2-3 sentences of biological background that directly explains the science behind what was observed today.
-Draw on real species facts: breeding phenology, incubation physiology, egg-laying biology, chick development, foraging behaviour, migration, or pair-bonding as relevant to the day's events.
-Be specific — connect the biology to what the camera actually saw. Write for a curious general reader, not a specialist.
-Do not repeat the narrative; illuminate it.
+Write exactly 2-3 sentences of biological background that illuminates the science behind what happened today.
+Draw on real species facts: breeding phenology, incubation physiology, egg-laying biology, chick development, foraging behaviour, migration, or pair-bonding as relevant.
+Be specific and useful for a curious general reader. Do not repeat the narrative.
+Do not mention the camera, the AI, observations, miscounts, feathers, or any monitoring artifact — write purely about Redstart biology.
 Output only the 2-3 sentences, no heading, no preamble."""
 
 
@@ -319,10 +310,17 @@ class Analyzer:
                 if row:
                     featured_image_path = row["path"]
 
-        lines = [
-            f"- {row['occurred_at'][11:16]} [{row['event_type']}] {row['narrative']}"
-            for row in events
-        ]
+        local_tz = ZoneInfo(self.cfg.tz)
+        lines = []
+        for row in events:
+            try:
+                dt = datetime.fromisoformat(row["occurred_at"])
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+                time_str = dt.astimezone(local_tz).strftime("%H:%M")
+            except (ValueError, TypeError):
+                time_str = row["occurred_at"][11:16]
+            lines.append(f"- {time_str} [{row['event_type']}] {row['narrative']}")
         prompt = DAILY_PROMPT_TEMPLATE.format(day=day, events="\n".join(lines))
         try:
             resp = self.model.generate_content(prompt)

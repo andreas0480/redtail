@@ -107,7 +107,7 @@ GROUND TRUTH:
 
 Write a warm, factual 3-5 sentence journal entry in English using local Stockholm time.
 Focus on what the birds actually did. Do not claim eggs were laid on a day unless that date falls on or after {FIRST_EGG_DATE}.
-Output only the summary text, no preamble."""
+Output only the summary text, no preamble. Do NOT prefix with "Date:", "Day:", "Summary:", or any heading — the date is already shown above the entry."""
 
 BIO_CONTEXT_PROMPT = """You are a field ornithologist writing the biological footnote for a Common Redstart (Phoenicurus phoenicurus) nest box journal.
 
@@ -319,7 +319,7 @@ class Analyzer:
         prompt = DAILY_PROMPT_TEMPLATE.format(day=day, events="\n".join(lines))
         try:
             resp = self.model.generate_content(prompt)
-            summary = (resp.text or "").strip()
+            summary = _strip_heading((resp.text or "").strip())
             if not summary:
                 return None
 
@@ -353,6 +353,25 @@ def _to_float(v: Any) -> Optional[float]:
         return float(v) if v is not None else None
     except (TypeError, ValueError):
         return None
+
+
+_HEADING_LINE = re.compile(
+    r"^\s*(?:date|day|summary|today)\s*[:\-]\s*\S.*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def _strip_heading(text: str) -> str:
+    """Remove leading 'Date: …', 'Day: …', etc. lines that Gemini sometimes prefixes."""
+    if not text:
+        return text
+    lines = text.lstrip().split("\n")
+    while lines and _HEADING_LINE.match(lines[0]):
+        lines.pop(0)
+    # Also drop a leading blank line left behind
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    return "\n".join(lines).strip()
 
 
 _JSON_FENCE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)

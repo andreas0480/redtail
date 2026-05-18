@@ -25,6 +25,7 @@ from .motion import MotionDetector
 from .recorder import SegmentRecorder
 from .timelapse import TimelapseBuilder
 from .util import ensure_dir, now_iso, setup_logging, today_str
+from .watcher import daily_nest_check
 
 log = logging.getLogger("redtail")
 
@@ -76,32 +77,50 @@ def _job_monitor():
     monitor.run_once()
 
 
+def _job_nest_watch():
+    daily_nest_check(cfg, db)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    log.info("redtail starting up")
-    recorder.start()
-    motion.start()
-    monitor.start()
+    log.info("redtail starting up%s", " (WATCH_ONLY)" if cfg.watch_only else "")
 
-    scheduler.add_job(_job_snapshot, IntervalTrigger(seconds=cfg.snapshot_interval_seconds), id="snapshot", max_instances=1, coalesce=True)
-    scheduler.add_job(_job_analyze, IntervalTrigger(seconds=60), id="analyze", max_instances=1, coalesce=True)
-    scheduler.add_job(_job_daily_timelapse, CronTrigger(hour=0, minute=10), id="timelapse_daily")
-    scheduler.add_job(_job_daily_summary, CronTrigger(hour=23, minute=55), id="daily_summary")
-    scheduler.add_job(_job_daily_summary, IntervalTrigger(hours=3), id="daily_summary_live", max_instances=1, coalesce=True)
-    scheduler.add_job(_job_monitor, IntervalTrigger(seconds=120), id="monitor", max_instances=1, coalesce=True)
-    scheduler.start()
+    if cfg.watch_only:
+        # Minimal watch-only mode: dashboard stays up, single daily nest check,
+        # everything else paused.
+        scheduler.add_job(
+            _job_nest_watch,
+            CronTrigger(hour=12, minute=0),
+            id="nest_watch_daily",
+            max_instances=1, coalesce=True,
+        )
+        scheduler.start()
+    else:
+        recorder.start()
+        motion.start()
+        monitor.start()
+
+        scheduler.add_job(_job_snapshot, IntervalTrigger(seconds=cfg.snapshot_interval_seconds), id="snapshot", max_instances=1, coalesce=True)
+        scheduler.add_job(_job_analyze, IntervalTrigger(seconds=60), id="analyze", max_instances=1, coalesce=True)
+        scheduler.add_job(_job_daily_timelapse, CronTrigger(hour=0, minute=10), id="timelapse_daily")
+        scheduler.add_job(_job_daily_summary, CronTrigger(hour=23, minute=55), id="daily_summary")
+        scheduler.add_job(_job_daily_summary, IntervalTrigger(hours=3), id="daily_summary_live", max_instances=1, coalesce=True)
+        scheduler.add_job(_job_monitor, IntervalTrigger(seconds=120), id="monitor", max_instances=1, coalesce=True)
+        scheduler.start()
 
     # Fire-and-forget startup ping (best effort; ignore if offline)
     if cfg.ntfy_topic:
-        send_ntfy(cfg, title="Redtail • online", message=f"Service started on {os.uname().nodename}", priority="low", tags=["white_check_mark"])
+        msg = "Watch-only mode — daily nest check at 12:00" if cfg.watch_only else f"Service started on {os.uname().nodename}"
+        send_ntfy(cfg, title="Redtail • online", message=msg, priority="low", tags=["white_check_mark"])
 
     yield
 
     log.info("redtail shutting down")
     scheduler.shutdown(wait=False)
-    motion.stop()
-    recorder.stop()
-    monitor.stop()
+    if not cfg.watch_only:
+        motion.stop()
+        recorder.stop()
+        monitor.stop()
 
 
 app = FastAPI(title="Redtail Nest Box", lifespan=lifespan)

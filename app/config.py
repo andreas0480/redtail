@@ -32,6 +32,10 @@ class Config:
 
     log_level: str
 
+    # Watch-only mode: pauses recording / motion / analyzer / summary jobs and
+    # runs a single daily snapshot check that alerts via ntfy on any change.
+    watch_only: bool
+
 
 def _int(name: str, default: int) -> int:
     v = os.environ.get(name)
@@ -68,4 +72,5 @@ def load_config() -> Config:
         motion_scene_threshold=_float("MOTION_SCENE_THRESHOLD", 0.06),
         motion_cooldown_seconds=_int("MOTION_COOLDOWN_SECONDS", 120),
         log_level=os.environ.get("LOG_LEVEL", "INFO"),
+        watch_only=os.environ.get("WATCH_ONLY", "").lower() in ("1", "true", "yes"),
     )

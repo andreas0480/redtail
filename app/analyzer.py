@@ -118,6 +118,39 @@ Be specific and useful for a curious general reader. Do not repeat the narrative
 Do not mention the camera, the AI, observations, miscounts, feathers, or any monitoring artifact — write purely about Redstart biology.
 Output only the 2-3 sentences, no heading, no preamble."""
 
+# Critic pass — runs after the initial generation. Catches the failure modes
+# I've been hand-fixing across the season. The critic either approves the text
+# or rewrites it; the rules are explicit so it's reproducible.
+CRITIC_PROMPT = f"""You are an editor reviewing text for a Common Redstart nest-box journal. Review the text below and either approve it or rewrite it so it complies with all rules.
+
+CONTEXT (silent ground truth — the text must agree with these, never restate them):
+- First egg laid {FIRST_EGG_DATE}. One egg per day. Clutch is five sky-blue eggs.
+- The nest was abandoned on 2026-05-13. No adult has returned since.
+- Hatching cannot occur before {EARLIEST_HATCH_DATE} and is now moot.
+
+HARD RULES (the text must NOT contain any of these):
+- Words: "AI", "model", "camera", "observation system", "miscount", "misidentified", "discrepancy", "hallucination", "monitoring".
+- Words: "Stockholm", "UTC", "timezone", "GMT", "CEST".
+- The word "feather" used to explain an egg count (it's fine in unrelated contexts).
+- More than five eggs claimed anywhere.
+- Claims of chicks, hatching, or feeding on any date before {EARLIEST_HATCH_DATE}.
+- A leading heading or date prefix: "Date: …", "Day: …", "Summary: …", bare "May 13, 2026:" or "2026-05-13:".
+- Clock-time readings like "at 04:00" or "around 13:21" — prefer natural phrasings ("just before dawn", "in the late afternoon", "by midday").
+
+FORMAT RULES (the text must satisfy):
+- Mode "{{mode}}". If mode = "summary": three to five sentences in a warm naturalist field-journal voice. If mode = "bio": two to three sentences of species biology that illuminate the entry, not restate it.
+- A single paragraph (no blank lines, no bullet points).
+- No heading, no preamble.
+
+TEXT UNDER REVIEW:
+\"\"\"
+{{text}}
+\"\"\"
+
+Reply with exactly one of two outputs, nothing else:
+- OK
+- REVISE:\\n<the corrected text>"""
+
 
 class Analyzer:
     def __init__(self, cfg: Config, db: Database):
@@ -327,6 +360,7 @@ class Analyzer:
             summary = _strip_heading((resp.text or "").strip())
             if not summary:
                 return None
+            summary = self._critique_and_fix(summary, mode="summary")
 
             # Generate biological context paragraph
             bio_context = None
@@ -334,6 +368,8 @@ class Analyzer:
                 bio_prompt = BIO_CONTEXT_PROMPT.format(day=day, summary=summary)
                 bio_resp = self.model.generate_content(bio_prompt)
                 bio_context = (bio_resp.text or "").strip() or None
+                if bio_context:
+                    bio_context = self._critique_and_fix(bio_context, mode="bio")
             except Exception:
                 log.warning("bio context generation failed for %s", day)
 
@@ -351,6 +387,42 @@ class Analyzer:
         except Exception:
             log.exception("daily summary failed")
             return None
+
+    def _critique_and_fix(self, text: str, mode: str) -> str:
+        """Run the generated text past a critic. Approve it or accept its rewrite.
+
+        mode: "summary" (3-5 sentence journal entry) or "bio" (2-3 sentence biology footnote).
+        Never raises; on any error returns the input unchanged.
+        """
+        if not text:
+            return text
+        try:
+            prompt = CRITIC_PROMPT.format(mode=mode, text=text)
+            resp = self.model.generate_content(prompt)
+            reply = (resp.text or "").strip()
+            if not reply:
+                return text
+            # Strip optional code fence the critic sometimes adds
+            m = _JSON_FENCE.search(reply)
+            if m:
+                reply = m.group(1).strip()
+            head = reply.split("\n", 1)[0].strip().upper()
+            if head == "OK":
+                return text
+            if head.startswith("REVISE"):
+                # Everything after the first line; tolerate "REVISE:" or "REVISE\n"
+                _, _, rest = reply.partition("\n")
+                fixed = rest.strip().strip('"').strip()
+                fixed = _strip_heading(fixed)
+                if fixed and len(fixed) >= 20:
+                    if fixed != text:
+                        log.info("critic rewrote %s entry (%d -> %d chars)", mode, len(text), len(fixed))
+                    return fixed
+            # Unrecognised reply — keep the original
+            return text
+        except Exception:
+            log.warning("critic pass failed for %s; keeping original", mode)
+            return text
 
 
 def _to_float(v: Any) -> Optional[float]:

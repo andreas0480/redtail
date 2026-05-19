@@ -1,3 +1,12 @@
+"""Rolling RTSP segment buffer.
+
+Maintains a background ffmpeg process that writes the live stream as a
+ring of fixed-duration MPEG-TS segments (default: 20 × 30 s = 10 min of
+pre-roll). The motion detector reads from this ring to assemble clips
+without re-encoding. ffmpeg manages segment rotation; we only supervise
+the process and restart it on exit.
+"""
+
 import logging
 import os
 import signal

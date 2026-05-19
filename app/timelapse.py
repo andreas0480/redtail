@@ -1,3 +1,13 @@
+"""Daily and cumulative timelapse generation.
+
+Daily timelapses are built once per night from each day's snapshots with
+ffmpeg's concat demuxer. Frame duration is computed as `target_seconds /
+frame_count` (clamped 2–25 fps) so the output runtime is roughly constant
+regardless of how many snapshots were captured. The cumulative film
+samples up to `max_per_day` frames from every day to keep the season-wide
+video manageable.
+"""
+
 import logging
 import shutil
 import subprocess

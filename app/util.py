@@ -1,3 +1,8 @@
+"""Shared helpers: logging setup, time/path utilities, and the canonical
+ffmpeg wrapper. Every subprocess call in the codebase goes through
+`run_ffmpeg()` so flags, timeout handling, and error capture stay uniform.
+"""
+
 import logging
 import os
 import subprocess

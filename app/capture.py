@@ -1,3 +1,11 @@
+"""Single-frame RTSP snapshot capture.
+
+Runs on a scheduled interval (default: every 5 minutes). Each capture
+becomes one row in `snapshots` and one file under
+`/data/snapshots/<YYYY-MM-DD>/<HHMMSS>.jpg`. The analyzer picks pending
+rows up asynchronously.
+"""
+
 import logging
 from datetime import datetime
 from pathlib import Path

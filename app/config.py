@@ -1,3 +1,11 @@
+"""Single source of truth for runtime configuration.
+
+All settings are loaded from environment variables (`load_config()`) and
+exposed via a frozen `Config` dataclass that the rest of the application
+treats as read-only. Sensitive values (RTSP credentials, API keys) live
+only in environment variables and never in the database, logs, or git.
+"""
+
 import os
 from dataclasses import dataclass
 from pathlib import Path

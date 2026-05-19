@@ -1,3 +1,20 @@
+"""FastAPI entry point.
+
+Owns the request layer, the APScheduler instance, and the lifecycle of
+the long-running background components (recorder, motion detector,
+health monitor). Two operational modes:
+
+  - Active: the full pipeline is wired up (capture, analyze, motion,
+    timelapse, daily summary, health monitor).
+  - Watch-only (`WATCH_ONLY=1`): everything paused except a single noon
+    nest-check job and the read-only dashboard. Used in the post-season
+    abandoned-clutch phase to keep the journal visible while halting all
+    write traffic and external API calls.
+
+Routes are grouped at the bottom: dashboard pages → HTMX fragments →
+media → health → admin.
+"""
+
 import asyncio
 import logging
 import os

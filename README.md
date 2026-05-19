@@ -1,60 +1,110 @@
-# Redtail — Nest Box Monitor
+# Redtail
 
-An AI-powered monitoring system for a Common Redstart (*Phoenicurus phoenicurus*) nest box.
-Captures snapshots and motion clips from a UniFi Protect camera, classifies each frame with
-Google Gemini vision, and presents everything in a self-hosted dashboard with a daily
-field-journal narrative.
+**A small, opinionated nest-box monitoring system.** Redtail watches a single
+camera inside a garden nest box, classifies every frame and every motion clip
+with a vision model, writes a daily naturalist field journal that reads aloud
+in a documentary-narrator voice, and ships the whole thing as a self-hosted
+dashboard at `https://redtail.belitz.se`.
+
+It was built over a few weekends to document a Common Redstart
+(*Phoenicurus phoenicurus*) nesting attempt in Sweden during the 2026 season.
+The bird is gone for the year, but the system is still online — running in a
+minimal *watch-only* mode that alerts if anything changes.
 
 ---
 
-## Features
+## What it does
 
-- **Live snapshot feed** — captures a JPEG every 5 minutes via RTSP for a full timelapse record
-- **Motion detection** — frame-diff trigger clips pre-buffered RTSP footage the moment anything stirs in the box
-- **Gemini vision analysis** — every snapshot and clip is classified with an `event_type` (e.g. `incubating`, `eggs_visible`, `adult_arrives`) and a one-sentence narrative
-- **Daily journal** — Gemini writes a warm, factual journal entry from each day's events, updated every 3 hours; each entry includes a biological context paragraph explaining the science behind what was observed
-- **Attenborough narration** — each entry can be played aloud in a David Attenborough-style voice, generated locally on a GPU box via XTTS-v2 (see [`narrator/README.md`](narrator/README.md))
-- **Daily & cumulative timelapses** — per-day ~30 s H.264 MP4s built at midnight, embedded in the journal; a season-wide cumulative film updated nightly
-- **Species reference page** — comprehensive biological profile of the Common Redstart with CC-licensed photography
-- **Health monitoring** — checks RTSP stream, disk space, and DB activity every 2 min; pushes alerts via [ntfy](https://ntfy.sh)
-- **Historical backfill** — tools to import the full UniFi Protect recording history retroactively
+- **Captures** a JPEG snapshot every five minutes from a UniFi Protect camera
+  via RTSPS, and a motion clip whenever the live frame-difference score crosses
+  a configurable threshold. Motion clips include 60 seconds of pre-roll from a
+  rolling buffer.
+- **Classifies** every snapshot and clip with Google Gemini 2.5 Flash. The
+  output is a structured event with a type (`incubating`, `eggs_visible`,
+  `adult_arrives`, etc.), a confidence score, a one-sentence narrative, and
+  subject counts (adults, eggs, chicks).
+- **Writes a daily journal entry** every three hours (and once at 23:55) that
+  condenses the day's events into a warm 3–5 sentence naturalist field-log,
+  followed by a 2–3 sentence biological footnote that explains the science of
+  what was observed. A second LLM pass (provider-agnostic — Gemini, Claude,
+  or GPT) reviews each entry against a catalogue of failure modes and either
+  approves or rewrites it.
+- **Narrates** every journal entry as an MP3 in a Sir-David-Attenborough-style
+  voice, generated on a separate GPU machine via Coqui XTTS-v2 fine-tuned on
+  audiobook audio.
+- **Builds timelapses** — a ~30 second daily film, plus a cumulative
+  season-wide reel rebuilt every night.
+- **Monitors its own health** — RTSP, disk, DB liveness — and pushes ntfy
+  notifications when anything degrades. A single noon nest-check job in
+  watch-only mode pings *"no change"* daily and escalates to *"change at the
+  nest!"* the moment the AI sees anything other than the abandoned baseline.
 
-## Dashboard pages
+## What it looks like
 
-| Page | Description |
+The dashboard is intentionally low-chrome: warm paper tones, serif headlines,
+a single nest-box illustration. Five pages:
+
+| Page | What's on it |
 |---|---|
-| **Home** | Latest snapshot, recent event log, today's journal summary |
-| **Clips** | Motion-triggered video gallery, grouped by day, labeled and narrated by AI |
-| **Journal** | Day-by-day narrative entries with embedded daily timelapse and biological context |
-| **Timelapse** | Full-season cumulative video |
-| **Species** | Comprehensive biological profile of the Common Redstart with photography |
+| **Today** | Latest snapshot, scrolling event log, today's journal entry |
+| **Journal** | Day-by-day entries, each with its own daily timelapse, biological footnote, and audio player |
+| **Clips** | Motion clips grouped by day and 6-hour period (night/morning/afternoon/evening), collapsed by default |
+| **Timelapse** | Cumulative season-wide video with a poster thumbnail |
+| **Species** | A 4,000-word naturalist profile of the Common Redstart with CC-licensed photography and a 10-minute audio reading |
 
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| Runtime | Python 3.12, Docker |
-| Web framework | FastAPI + Jinja2 + HTMX |
-| AI | Google Gemini 2.5 Flash (vision) |
-| Video | ffmpeg |
-| Database | SQLite (WAL mode) |
-| Notifications | ntfy |
-
-## Architecture
+## Architecture at a glance
 
 ```
-UniFi Protect RTSP
-      │
-      ├──► capture.py  ──► snapshots/  ──┐
-      │                                  │
-      └──► recorder.py ──► motion.py    ─┤──► events.db ──► analyzer.py (Gemini)
-                           (clips/)      │                         │
-                                         └─────────────────────────┘
-                                                                    │
-                                               FastAPI dashboard ◄──┘
+┌────────────────── Production host (Docker, .30.103) ──────────────────────┐
+│                                                                            │
+│  UniFi Protect ──RTSPS──┬──► capture.py   (5-min snapshots) ──┐            │
+│                         │                                      ▼            │
+│                         ├──► recorder.py  (rolling segment buffer)         │
+│                         │                                      ▼            │
+│                         └──► motion.py    (scene-diff trigger) ┘            │
+│                                                  │                          │
+│                                                  ▼                          │
+│              ┌──────────────────── events.db (SQLite) ─────────────────┐   │
+│              │  snapshots │ clips │ events │ daily_summaries │ alerts  │   │
+│              └─────────────────────────┬────────────────────────────────┘   │
+│                                        │                                    │
+│  analyzer.py ◄──── pending rows ───────┤                                    │
+│   ├─ Gemini vision → events                                                 │
+│   ├─ Gemini summary → daily journal entry                                   │
+│   └─ Critic pass (Gemini / Claude / GPT) → approved entry                   │
+│                                                                            │
+│  timelapse.py     monitor.py     watcher.py                                │
+│   nightly H.264   ntfy alerts    daily noon check (watch-only mode)        │
+│                                                                            │
+│  FastAPI + Jinja2 + HTMX dashboard  ◄── /journal /clips /species /...      │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+                                        ▲
+                                        │  daily 00:30 cron over SSH
+                                        │
+┌────────────────── GPU machine (NVIDIA, .10.84) ────────────────────────────┐
+│  narrator/                                                                  │
+│   ├─ Coqui XTTS-v2 fine-tuned on Attenborough audio                        │
+│   ├─ Pulls pending summaries, synthesizes per-day MP3                      │
+│   └─ Pushes MP3 + DB update back over SSH                                  │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
-See [`docs/architecture.md`](docs/architecture.md) for a detailed breakdown.
+Deep architecture write-up: [`docs/architecture.md`](docs/architecture.md).
+
+## Tech stack and rationale
+
+| Layer | Choice | Why |
+|---|---|---|
+| Runtime | Python 3.12, Docker Compose | Single-file deploy, no orchestrator needed for a one-camera system |
+| Web | FastAPI + Jinja2 + HTMX | Server-rendered HTML with surgical updates; no SPA to maintain |
+| AI (vision) | Google Gemini 2.5 Flash | Cheap, fast, excellent at the bird-naïve naturalist prompt |
+| AI (critic) | Provider-agnostic (Gemini / Claude / OpenAI) | Lets a stronger model review the cheap model's output |
+| AI (TTS) | Coqui XTTS-v2 fine-tune | Self-hosted, GPU-accelerated, no per-character cost |
+| Video | ffmpeg only | Concat demuxer for clip stitching, no re-encode |
+| Database | SQLite + WAL | Single-writer workload; backup is `cp` |
+| Notifications | [ntfy](https://ntfy.sh) | Push to phone with one HTTPS POST |
+| Edge | Cloudflare Tunnel | Public hostname without opening a port |
 
 ## Quick start
 
@@ -62,49 +112,33 @@ See [`docs/architecture.md`](docs/architecture.md) for a detailed breakdown.
 git clone https://github.com/andreas0480/redtail.git
 cd redtail
 cp .env.example .env
-# Edit .env — at minimum set RTSP_URL, GEMINI_API_KEY, and TZ
+$EDITOR .env                    # set RTSP_URL, GEMINI_API_KEY, TZ at minimum
 docker compose up -d --build
 ```
 
-Dashboard: `http://localhost:8765`  
-Full setup guide: [`docs/setup.md`](docs/setup.md)
+Dashboard: `http://localhost:8765` (or whatever `DASHBOARD_PORT` you chose).
 
-## Configuration
+Full guides:
 
-All configuration is via environment variables. Copy `.env.example` to `.env` and edit.
+- [Setup & deployment](docs/setup.md) — prerequisites, configuration reference, first-run checklist
+- [Architecture](docs/architecture.md) — system design, data flow, schema, operating modes
+- [AI pipeline](docs/ai-pipeline.md) — every prompt explained, critic design, multi-provider
+- [Operations runbook](docs/runbook.md) — common scenarios with copy-pasteable commands
+- [Historical backfill](docs/backfill.md) — importing UniFi Protect archive
+- [Attenborough narrator](narrator/README.md) — self-hosted XTTS-v2 TTS subsystem
 
-| Variable | Description |
-|---|---|
-| `RTSP_URL` | UniFi Protect RTSPS URL (`rtsps://host:7441/token`) |
-| `GEMINI_API_KEY` | Google AI Studio API key |
-| `TZ` | Timezone for timestamps and timelapse labels |
-| `SMB_HOST` / `SMB_SHARE` / `SMB_SUBDIR` | NAS mount for data persistence (optional) |
-| `NTFY_TOPIC` | Push notification topic (optional) |
-| `SNAPSHOT_INTERVAL_SECONDS` | Capture cadence, default 300 |
-| `MOTION_SCENE_THRESHOLD` | Frame-diff sensitivity, default 0.02 |
+## Project status
 
-## External access
-
-`backfill/deploy.py` and `review.py` require a `REDTAIL_HOST` environment variable pointing
-at the machine running the container:
-
-```bash
-export REDTAIL_HOST=192.168.x.x   # or hostname
-python review.py prepare
-```
-
-## Historical backfill
-
-If the system was deployed after nesting started, the backfill tools can import the full
-UniFi Protect recording history. See [`docs/backfill.md`](docs/backfill.md).
-
-## Project context
-
-Built to document a Common Redstart (*rödstjärt*) nesting in a garden nest box in Sweden
-during the 2026 season. The species is a small insectivorous passerine — the Gemini prompts
-are carefully tuned to the species, distinguishing pre-laying nest preparation from true
-incubation, and tracking the clutch day by day.
+The 2026 nesting attempt ended in abandonment on 13 May after a complete clutch
+of five sky-blue eggs. The system has been running in **watch-only mode** since
+18 May: dashboard, journal, narrations, clips and timelapses are all still
+accessible, but capture/motion/recorder/analyzer/health-monitor have been
+paused. A single Gemini classification at 12:00 local fires daily and pushes a
+ntfy ping if anything changes. If a second nesting attempt begins the same box
+the watcher will detect it and surface immediately.
 
 ## License
 
-MIT
+[MIT](LICENSE). The bundled Attenborough XTTS fine-tune is non-commercial only
+(Coqui Public Model License) and uses an unauthorized voice clone — see
+[`narrator/README.md`](narrator/README.md) for the ethical caveat.

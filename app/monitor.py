@@ -1,3 +1,13 @@
+"""Health monitoring and ntfy notifications.
+
+Runs a small battery of checks every two minutes — RTSP reachability,
+free disk space on the data volume, recorder liveness, and recent DB
+write activity — and pushes a notification via ntfy when any check
+fails or recovers. Notifications are de-duplicated against the `alerts`
+table so a sustained failure doesn't produce a stream of identical
+pings.
+"""
+
 import logging
 import socket
 import subprocess

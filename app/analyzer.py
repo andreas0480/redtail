@@ -1,3 +1,33 @@
+"""AI processing pipeline: snapshot/clip classification and journal writing.
+
+This module owns every call to a language model in the live system.
+Three distinct flows live here:
+
+  1. **Per-frame classification.** Each unanalyzed snapshot row in the
+     `snapshots` table is sent to Gemini with `SNAPSHOT_PROMPT`. The
+     response is parsed into an `events` row plus subject counts
+     (adults / eggs / chicks).
+
+  2. **Per-clip classification.** Each motion clip is sampled into four
+     evenly-spaced frames, the bundle is sent to Gemini with
+     `CLIP_PROMPT`, and the response yields an event plus a human-readable
+     label and `keep` flag used in the gallery.
+
+  3. **Daily summary + biological context.** At 23:55 (and every 3 h
+     during the day) all of a day's events are condensed into a 3–5
+     sentence naturalist journal entry. A 2–3 sentence species-biology
+     footnote is generated from that summary in a second call. Both pass
+     through a critic that reviews against the failure-mode catalogue
+     (see `CRITIC_PROMPT`) and either approves or rewrites.
+
+The critic is provider-agnostic: it can dispatch to Gemini, Anthropic
+Claude, or OpenAI ChatGPT based on `CRITIC_PROVIDER` in the config. The
+third-party SDKs are lazy-imported.
+
+Every prompt and the critic rule catalogue are exported as module-level
+constants so changes are reviewable in version control.
+"""
+
 import json
 import logging
 import re

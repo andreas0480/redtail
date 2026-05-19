@@ -1,3 +1,18 @@
+"""SQLite persistence layer.
+
+A small wrapper around the standard library's `sqlite3` that:
+  - manages a per-call connection guarded by a process-wide lock, which
+    is sufficient for this single-writer workload and avoids the gotchas
+    of cross-thread connection sharing;
+  - enables WAL mode for non-blocking reads while a snapshot or summary
+    is being written;
+  - applies the schema and any forward-only ALTER TABLE migrations on
+    startup so existing deployments upgrade transparently.
+
+Other modules never touch SQLite directly; they go through the `Database`
+class so that connection lifetime and column additions stay in one place.
+"""
+
 import sqlite3
 import threading
 from contextlib import contextmanager

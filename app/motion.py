@@ -1,3 +1,16 @@
+"""Motion detection + clip extraction.
+
+Runs a low-resolution, low-FPS parse of the live RTSP stream with ffmpeg's
+`select` and `metadata` filters. Each frame whose scene-change score
+crosses `MOTION_SCENE_THRESHOLD` is treated as a trigger. The detector
+then pulls the relevant segments out of the recorder's rolling buffer
+(pre-roll plus one post-roll segment), concatenates them with the
+`concat` demuxer (no re-encode), and records a `clips` row.
+
+A cooldown between triggers (default 120 s) keeps a single sustained
+event from producing dozens of overlapping clips.
+"""
+
 import logging
 import re
 import shutil

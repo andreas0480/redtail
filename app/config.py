@@ -21,6 +21,14 @@ class Config:
     gemini_api_key: str
     gemini_model: str
 
+    # Critic pass — reviews the daily summary before saving.
+    # Provider may be "gemini" (default, reuses gemini_api_key), "anthropic", or "openai".
+    # When provider == "gemini" and critic_model is unset, the main gemini_model is reused.
+    critic_provider: str
+    critic_model: str
+    anthropic_api_key: str
+    openai_api_key: str
+
     ntfy_server: str
     ntfy_topic: str
 
@@ -64,6 +72,10 @@ def load_config() -> Config:
         db_path=state_dir / "events.db",
         gemini_api_key=os.environ.get("GEMINI_API_KEY", ""),
         gemini_model=os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
+        critic_provider=os.environ.get("CRITIC_PROVIDER", "gemini").lower(),
+        critic_model=os.environ.get("CRITIC_MODEL", ""),
+        anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
+        openai_api_key=os.environ.get("OPENAI_API_KEY", ""),
         ntfy_server=os.environ.get("NTFY_SERVER", "https://ntfy.sh").rstrip("/"),
         ntfy_topic=os.environ.get("NTFY_TOPIC", ""),
         snapshot_interval_seconds=_int("SNAPSHOT_INTERVAL_SECONDS", 300),

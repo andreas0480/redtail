@@ -163,6 +163,16 @@ class Analyzer:
         else:
             log.warning("GEMINI_API_KEY not set, analyzer disabled")
 
+        # Critic pass — independent provider, falls back to the main Gemini model.
+        self._critic_provider = (cfg.critic_provider or "gemini").lower()
+        self._critic_model_name = cfg.critic_model or cfg.gemini_model
+        self._gemini_critic_model = None
+        if self._critic_provider == "gemini" and self._critic_model_name != cfg.gemini_model and cfg.gemini_api_key:
+            self._gemini_critic_model = genai.GenerativeModel(self._critic_model_name)
+        if self.model:
+            log.info("critic configured: provider=%s model=%s",
+                     self._critic_provider, self._critic_model_name)
+
     @property
     def enabled(self) -> bool:
         return self.model is not None
@@ -398,8 +408,7 @@ class Analyzer:
             return text
         try:
             prompt = CRITIC_PROMPT.format(mode=mode, text=text)
-            resp = self.model.generate_content(prompt)
-            reply = (resp.text or "").strip()
+            reply = self._critic_generate(prompt).strip()
             if not reply:
                 return text
             # Strip optional code fence the critic sometimes adds
@@ -423,6 +432,43 @@ class Analyzer:
         except Exception:
             log.warning("critic pass failed for %s; keeping original", mode)
             return text
+
+    def _critic_generate(self, prompt: str) -> str:
+        """Dispatch the critic prompt to the configured provider, return reply text.
+
+        Supports "gemini" (default, reuses self.model or a dedicated genai model),
+        "anthropic" (Anthropic Claude API), and "openai" (OpenAI Chat Completions).
+        Lazy-imports the third-party SDKs so users who don't use them needn't have
+        them installed.
+        """
+        provider = self._critic_provider
+
+        if provider == "anthropic":
+            import anthropic
+            client = anthropic.Anthropic(api_key=self.cfg.anthropic_api_key or None)
+            msg = client.messages.create(
+                model=self._critic_model_name or "claude-sonnet-4-5",
+                max_tokens=2048,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return "".join(getattr(b, "text", "") for b in msg.content)
+
+        if provider == "openai":
+            from openai import OpenAI
+            client = OpenAI(api_key=self.cfg.openai_api_key or None)
+            resp = client.chat.completions.create(
+                model=self._critic_model_name or "gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return resp.choices[0].message.content or ""
+
+        # Default: Gemini. Use a dedicated genai model instance when a different
+        # critic model is requested; otherwise reuse the main analyzer model.
+        gem = self._gemini_critic_model or self.model
+        if gem is None:
+            return ""
+        resp = gem.generate_content(prompt)
+        return resp.text or ""
 
 
 def _to_float(v: Any) -> Optional[float]:

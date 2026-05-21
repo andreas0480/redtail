@@ -173,6 +173,7 @@ async def index(request: Request):
             "notable_summary": notable_summary,
             "ntfy_topic": cfg.ntfy_topic,
             "snapshot_interval": cfg.snapshot_interval_seconds,
+            "watch_only": cfg.watch_only,
         },
     )
 

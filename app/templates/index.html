@@ -4,6 +4,25 @@
 
 {% block content %}
 
+{% if watch_only %}
+<section class="card season-closed">
+  <h2 class="card-title">Season closed</h2>
+  <p class="season-closed-body">
+    After five sky-blue eggs were laid between 8 and 12 May, the female stopped
+    returning to the nest on 13 May. Five days of an unattended clutch confirmed
+    the abandonment — whether through predation, accident, or one of the quiet
+    arithmetics of a small bird's life is something we will never know. The eggs
+    will not hatch.
+  </p>
+  <p class="season-closed-body">
+    Live capture and motion recording have been paused. The journal, clips and
+    timelapses below remain as a record of the season. A single check at midday
+    each day will surface any change in the box — if a new attempt begins in
+    this same cavity, the system will say so.
+  </p>
+</section>
+{% endif %}
+
 <section class="card snapshot-frame"
          hx-get="/fragments/latest"
          hx-trigger="every 30s"

@@ -756,6 +756,29 @@ footer code {
   background: var(--moss);
 }
 
+/* -------------------- season-closed banner (Today page) -------------------- */
+
+.season-closed {
+  grid-column: 1 / -1;          /* span both columns of the page-today grid */
+  border-left: 4px solid var(--moss);
+  background:
+    linear-gradient(180deg, rgba(106,122,58,0.05), transparent 60%),
+    var(--paper);
+}
+
+.season-closed .card-title { color: var(--moss-deep); }
+.season-closed .card-title::before { background: var(--moss-deep); }
+
+.season-closed-body {
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin: 0 0 10px;
+}
+
+.season-closed-body:last-child { margin-bottom: 0; }
+
 /* -------------------- bio context (journal) -------------------- */
 
 .bio-context {

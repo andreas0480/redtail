@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Generate Attenborough-voiced narrations of daily journal entries.
+"""Generate narrated MP3s of daily journal entries via self-hosted TTS.
 
-Run on `ullm` (which has the GPU). Pulls daily summaries that don't yet
-have a narration from the production DB on .30.103, generates MP3s with
-XTTS-v2 fine-tuned on Attenborough audio, copies them back, and updates
-the DB. Designed to be invoked daily by cron after the 23:55 summary job.
+Run on a GPU host. Pulls daily summaries that don't yet have a narration
+from the production DB, synthesises audio with Coqui XTTS-v2 (zero-shot,
+conditioned on the reference clip in MODEL_DIR/ref.wav), copies the
+resulting MP3 back to production over SSH, and updates the DB. Designed
+to be invoked daily by cron after the 23:55 summary job.
 """
 
 from __future__ import annotations
@@ -147,7 +148,7 @@ def deploy_to_production(day: str, mp3_path: Path) -> str:
 
 
 def load_model():
-    log.info("loading XTTS-v2 Attenborough fine-tune...")
+    log.info("loading XTTS-v2 model...")
     t0 = time.time()
     from TTS.tts.configs.xtts_config import XttsConfig
     from TTS.tts.models.xtts import Xtts

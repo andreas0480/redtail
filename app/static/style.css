@@ -925,6 +925,7 @@ footer code {
   border: 1px solid var(--border);
   display: block;
   object-fit: cover;
+  object-position: center top;   /* keep the bird's head when cropping */
   max-height: 260px;
   background: var(--paper-deep);
 }

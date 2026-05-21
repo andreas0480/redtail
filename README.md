@@ -29,9 +29,8 @@ minimal *watch-only* mode that alerts if anything changes.
   what was observed. A second LLM pass (provider-agnostic — Gemini, Claude,
   or GPT) reviews each entry against a catalogue of failure modes and either
   approves or rewrites it.
-- **Narrates** every journal entry as an MP3 in a Sir-David-Attenborough-style
-  voice, generated on a separate GPU machine via Coqui XTTS-v2 fine-tuned on
-  audiobook audio.
+- **Narrates** every journal entry as an MP3 in a documentary-narrator
+  voice, generated on a separate GPU machine via Coqui XTTS-v2.
 - **Builds timelapses** — a ~30 second daily film, plus a cumulative
   season-wide reel rebuilt every night.
 - **Monitors its own health** — RTSP, disk, DB liveness — and pushes ntfy
@@ -84,7 +83,7 @@ a single nest-box illustration. Five pages:
                                         │
 ┌────────────────── GPU machine (NVIDIA, .10.84) ────────────────────────────┐
 │  narrator/                                                                  │
-│   ├─ Coqui XTTS-v2 fine-tuned on Attenborough audio                        │
+│   ├─ Coqui XTTS-v2 fine-tune (bring your own checkpoint)                   │
 │   ├─ Pulls pending summaries, synthesizes per-day MP3                      │
 │   └─ Pushes MP3 + DB update back over SSH                                  │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -125,7 +124,7 @@ Full guides:
 - [AI pipeline](docs/ai-pipeline.md) — every prompt explained, critic design, multi-provider
 - [Operations runbook](docs/runbook.md) — common scenarios with copy-pasteable commands
 - [Historical backfill](docs/backfill.md) — importing UniFi Protect archive
-- [Attenborough narrator](narrator/README.md) — self-hosted XTTS-v2 TTS subsystem
+- [Narrator](narrator/README.md) — self-hosted XTTS-v2 TTS subsystem
 
 ## Project status
 
@@ -139,6 +138,7 @@ the watcher will detect it and surface immediately.
 
 ## License
 
-[MIT](LICENSE). The bundled Attenborough XTTS fine-tune is non-commercial only
-(Coqui Public Model License) and uses an unauthorized voice clone — see
-[`narrator/README.md`](narrator/README.md) for the ethical caveat.
+[MIT](LICENSE) for everything in this repository. XTTS-v2 (used by the
+narrator) is non-commercial under the Coqui Public Model License, and any
+voice you train it on carries its own licensing and ethical
+considerations — see [`narrator/README.md`](narrator/README.md).

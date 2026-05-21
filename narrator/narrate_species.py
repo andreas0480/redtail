@@ -2,9 +2,10 @@
 """One-off: narrate the entire Common Redstart species page.
 
 Reads a hand-crafted speech-friendly version of the species text (numbers
-spelled out, no tables, no markdown), synthesizes a single MP3 in
-Attenborough's voice, and writes it to app/static/species/narration.mp3
-so the static file is served directly without docker plumbing.
+spelled out, no tables, no markdown) and synthesises a single MP3 with
+XTTS-v2, then writes it to the local output directory. Push the result
+into the production data volume (e.g. /data/narrations/species.mp3) and
+the species page audio player will serve it from /media/narrations/species.mp3.
 
 Run once. Re-run after editing the species page text below.
 """
@@ -21,7 +22,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 MODEL_DIR = ROOT / "model" / "Finished_model_files"
 REF_WAV = MODEL_DIR / "ref.wav"
-OUT_DIR = Path(__file__).resolve().parent.parent / "app" / "static" / "species"
+OUT_DIR = ROOT / "output"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")

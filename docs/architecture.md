@@ -54,7 +54,7 @@ box over the course of one nesting season, in a way that:
                                         │
 ┌────────────────── GPU machine (NVIDIA, .10.84) ────────────────────────────┐
 │  narrator/                                                                  │
-│   ├─ Coqui XTTS-v2 fine-tuned on Attenborough audio                        │
+│   ├─ Coqui XTTS-v2 fine-tune (bring your own checkpoint)                   │
 │   ├─ Pulls pending summaries, synthesizes per-day MP3                      │
 │   └─ Pushes MP3 + DB update back over SSH                                  │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -387,7 +387,7 @@ record online without burning API quota.
 | **Single SQLite file, single process** | No HA, can't horizontally scale. But the workload is one camera and one writer; anything fancier is overkill. |
 | **Server-rendered HTML + HTMX** | No client-side richness (no live event stream over WebSocket). But the build pipeline is `pip install` and the codebase has zero JavaScript. |
 | **Gemini Flash for primary classification** | Occasional misclassifications (a feather counted as an egg). But mitigated by the critic pass, ground-truth in prompts, and a hand-written failure-mode catalogue. Cost is ~€0.10/day. |
-| **XTTS-v2 self-hosted TTS** | Needs a GPU; not legally clean (the voice clone is unauthorized). But avoids per-character cloud cost and gives a recognizable Attenborough-like delivery. |
+| **XTTS-v2 self-hosted TTS** | Needs a GPU and you bring your own checkpoint with its own licensing. But avoids per-character cloud cost and keeps audio generation under your control. |
 | **One-file SQLite, no message broker** | All inter-component coordination is "set a flag in a table." Slightly less elegant than a queue, but completely transparent and trivial to debug. |
 | **Provider-agnostic critic** | Three SDKs in `requirements.txt`. But lazy imports mean only the active provider is loaded, and the abstraction is one function. |
 

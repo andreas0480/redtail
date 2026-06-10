@@ -130,11 +130,20 @@ Full guides:
 
 The 2026 nesting attempt ended in abandonment on 13 May after a complete clutch
 of five sky-blue eggs. The system has been running in **watch-only mode** since
-18 May: dashboard, journal, narrations, clips and timelapses are all still
-accessible, but capture/motion/recorder/analyzer/health-monitor have been
-paused. A single Gemini classification at 12:00 local fires daily and pushes a
-ntfy ping if anything changes. If a second nesting attempt begins the same box
-the watcher will detect it and surface immediately.
+18 May: the dashboard, journal, narrations, clips and timelapses all remain
+accessible as a record of the season; capture, motion detection, the recorder,
+the analyzer, and the health monitor are all paused. A single Gemini
+classification at 12:00 local fires daily and pushes a ntfy ping — quietly when
+nothing has changed, at high priority the moment the AI sees anything other
+than the abandoned-but-intact baseline. If a second nesting attempt begins in
+the same box the watcher will surface it immediately and the system can be
+flipped back to active mode by clearing `WATCH_ONLY` in `.env` (see the
+[runbook](docs/runbook.md#resume-active-mode-next-clutch-starts)).
+
+Roughly four weeks of watch-only operation so far. The noon checks have all
+returned the expected baseline; no second attempt has begun in this box, which
+is consistent with the timing of nest-loss in this species — replacement
+clutches after a mid-incubation failure are usually started in a fresh cavity.
 
 ## License
 

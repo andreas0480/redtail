@@ -228,7 +228,9 @@ docker compose up -d
 
 This pauses everything except a 12:00-daily nest check that pings ntfy with
 "no change" or escalates on the first frame that doesn't match the
-abandoned-but-intact baseline. See the [runbook](runbook.md) for the
+abandoned-but-intact baseline. The Today page also surfaces a "Season closed"
+banner explaining the context to anyone visiting the dashboard. See the
+[runbook](runbook.md) for the
 reverse procedure.
 
 ## Environment variables — complete reference

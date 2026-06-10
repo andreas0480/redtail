@@ -375,10 +375,15 @@ Plus the recorder and motion-detector threads. This is the default — set
 
 `WATCH_ONLY=1`. Everything above is paused. Only the daily 12:00 nest check
 fires. The dashboard, journal, narrations, clips and species page remain
-read-accessible.
+read-accessible, and a sober "Season closed" banner renders at the top of
+the Today page so visitors understand the context.
 
 Used in the post-season abandoned-clutch phase to keep the historical
-record online without burning API quota.
+record online without burning API quota. The mode flips back to active
+by clearing the `WATCH_ONLY` line from `.env` and restarting the
+container — no schema changes, no data loss. The system has run in this
+mode since 18 May 2026 with stable noon checks and no detected change in
+the box.
 
 ## Trade-offs and decisions
 
